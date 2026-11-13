@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpectraLink | NASA Earth Observation 3D Mission Control</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Custom Mission Control Styles -->
+  <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+
+  <!-- Core Supernova Flash Effect -->
+  <div id="supernova-flash" class="supernova-flash-overlay"></div>
+
+  <!-- ===================================================================== -->
+  <!-- STAGE 1: Full-Screen 3D Orbital Earth Stage                           -->
+  <!-- ===================================================================== -->
+  <div id="stage-3d" class="stage active">
+    <!-- 3D WebGL Canvas Container for Globe.gl -->
+    <div id="globe-container"></div>
+
+    <!-- Deep Space Atmospheric Vignette -->
+    <div class="space-vignette"></div>
+
+    <!-- Top NASA Orbital Telemetry Header -->
+    <header class="orbital-header">
+      <div class="brand-container">
+        <img src="static/logo_transparent.png" alt="SpectraLink Logo" class="brand-logo-img">
+        <div class="brand-divider"></div>
+        <img src="static/nasa_space_apps_white.png" alt="NASA Space Apps Challenge Logo" class="brand-space-apps-img">
+        <div class="brand-text">
+          <div class="nasa-tag">NASA SPACE APPS CHALLENGE · SENSOR HARMONIZATION</div>
+          <div class="engine-tag"><span>●</span> GEE PROJECT: IDYLLIC-ANVIL-514517-B3</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Floating Orbital Command & Global Search Overlay -->
+    <div class="orbital-command-overlay">
+      <!-- Search Bar with Live Autocomplete -->
+      <div class="search-command-card glassmorphic">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            id="global-search-input" 
+            placeholder="Search ~200 countries or select a showcase target..." 
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button id="btn-custom-bbox" class="btn-action-ghost" title="Enter Custom Lat/Lon Coordinates">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+            </svg>
+            <span>Custom ROI</span>
+          </button>
+        </div>
+
+        <!-- Autocomplete Dropdown List -->
+        <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden"></div>
+      </div>
+
+      <!-- Quick Showcase Region Cards / Chips -->
+      <div class="showcase-strip">
+        <span class="showcase-label">FEATURED SATELLITE FIRE REGIMES:</span>
+        <div class="showcase-chips" id="showcase-chips-container">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- 3D Orbit Navigation Guide -->
+      <div class="orbital-hints">
+        <span><kbd>Click & Drag</kbd> Rotate Planet</span>
+        <span><kbd>Scroll</kbd> Zoom</span>
+        <span><kbd>Click Flame / Country</kbd> Dive In</span>
+      </div>
+    </div>
+
+    <!-- Active Satellite Orbit HUD -->
+    <div class="satellite-hud glassmorphic">
+      <div class="hud-header">ORBITING CONSTELLATIONS</div>
+      <div class="sat-item">
+        <span class="sat-dot terra"></span>
+        <span class="sat-name">MODIS Terra</span>
+        <span class="sat-meta">705 km · 10:30 AM Descending</span>
+      </div>
+      <div class="sat-item">
+        <span class="sat-dot aqua"></span>
+        <span class="sat-name">MODIS Aqua</span>
+        <span class="sat-meta">705 km · 1:30 PM Ascending</span>
+      </div>
+      <div class="sat-item">
+        <span class="sat-dot viirs"></span>
+        <span class="sat-name">VIIRS Suomi-NPP</span>
+        <span class="sat-meta">824 km · 375m I-Band HR</span>
+      </div>
+    </div>
+
+    <!-- Secret Easter Egg: "تدمير الكرة الأرضية" Stealth 3D Explosion Button -->
+    <button id="btn-destroy-earth" class="btn-destroy-earth" title="System Override">
+      💥 تدمير الكرة الأرضية
+    </button>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- STAGE 2: Simplified Regional High-Res Satellite Mission Workspace     -->
+  <!-- ===================================================================== -->
+  <div id="stage-regional" class="stage">
+    
+    <!-- Top Mission Control Navigation Bar -->
+    <header class="regional-header">
+      <div class="nav-left">
+        <button id="btn-back-to-orbit" class="btn-back-orbit" title="Return to 3D Earth Globe">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Back to 3D Earth</span>
+        </button>
+
+        <img src="static/logo_transparent.png" alt="SpectraLink" class="nav-logo-img">
+        <div class="brand-divider"></div>
+        <img src="static/nasa_space_apps_white.png" alt="NASA Space Apps" class="nav-space-apps-img">
+
+        <div class="region-selector-wrap">
+          <select id="region-dropdown" class="region-select">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <div class="ai-model-badge">
+          <span class="badge-label">AI Engine:</span>
+          <span id="active-model-name" class="badge-value">SpectraNet Stacking</span>
+        </div>
+
+        <button id="btn-export-csv" class="btn-download" title="Download 48-Column Continuous Harmonized Dataset">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Download CSV</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 4 Clean Executive KPI Cards -->
+    <section class="kpi-banner">
+      <div class="kpi-card">
+        <span class="kpi-icon">🔥</span>
+        <div class="kpi-content">
+          <span class="kpi-title">Total Active Fires</span>
+          <div id="kpi-total-hotspots" class="kpi-val">--</div>
+          <span class="kpi-sub">Harmonized 2001–2025</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-icon">📅</span>
+        <div class="kpi-content">
+          <span class="kpi-title">Peak Burning Months</span>
+          <div id="kpi-peak-months" class="kpi-val text-amber">--</div>
+          <span class="kpi-sub">Highest Fire Density</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-icon">🎯</span>
+        <div class="kpi-content">
+          <span class="kpi-title">AI Calibration Accuracy</span>
+          <div id="kpi-accuracy-badge" class="kpi-val text-cyan">98.5% Match</div>
+          <span id="kpi-cv-r2" class="kpi-sub">Time-Series R² = 0.76</span>
+        </div>
+      </div>
+
+      <div class="kpi-card alert-card">
+        <span class="kpi-icon">🚨</span>
+        <div class="kpi-content">
+          <span class="kpi-title">Current Fire Risk</span>
+          <div id="kpi-risk-badge" class="kpi-val text-green">Quiet Season</div>
+          <span id="kpi-risk-detail" class="kpi-sub">Next Month: Low Activity</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Workspace Split: Left Map (55%) & Right Single-Chart Tabs (45%) -->
+    <main class="mission-workspace">
+      
+      <!-- LEFT SECTION: Large Interactive Satellite Map -->
+      <section class="workspace-map-pane">
+        <!-- Map Overlay Header with Filter Pills -->
+        <div class="map-overlay-bar">
+          <div class="map-region-info">
+            <span id="map-target-title" class="map-title">Nile Delta, Egypt</span>
+            <span id="map-biome-tag" class="map-biome">Irrigated Agricultural Ecosystem</span>
+          </div>
+
+          <!-- Clean 3-Button Filter Pill -->
+          <div class="fire-filter-pills">
+            <button class="filter-pill active" data-filter="all">
+              <span>🔥</span> All Harmonized Fires
+            </button>
+            <button class="filter-pill" data-filter="viirs">
+              <span>🛰️</span> VIIRS (375m)
+            </button>
+            <button class="filter-pill" data-filter="modis">
+              <span>🛰️</span> MODIS (1km)
+            </button>
+          </div>
+        </div>
+
+        <!-- Leaflet Map Canvas -->
+        <div id="leaflet-map" class="map-canvas"></div>
+
+        <div class="map-footer-coords">
+          <span id="mouse-coords">Coordinates: --.---, --.---</span>
+          <span class="map-legend-hint">🔥 Major Fire Center &nbsp;·&nbsp; 🔴 Active Satellite Detection</span>
+        </div>
+      </section>
+
+      <!-- RIGHT SECTION: Clean Single-View Analytics Tabs -->
+      <section class="workspace-analytics-pane">
+        
+        <!-- Tab Navigation Buttons -->
+        <nav class="analytics-tabs-nav">
+          <button class="tab-btn active" data-tab="tab-calendar">
+            📅 Yearly Fire Calendar
+          </button>
+          <button class="tab-btn" data-tab="tab-timeline">
+            📈 Before vs. After
+          </button>
+          <button class="tab-btn" data-tab="tab-models">
+            🤖 AI Models Accuracy
+          </button>
+          <button class="tab-btn" data-tab="tab-forecast">
+            🔮 2026 Forecast & Smoke
+          </button>
+        </nav>
+
+        <!-- Tab 1: Yearly Fire Calendar -->
+        <div id="tab-calendar" class="tab-panel active">
+          <div class="chart-box">
+            <div class="takeaway-banner">
+              <span class="takeaway-icon">💡</span>
+              <span id="calendar-takeaway" class="takeaway-text">
+                Agricultural stubble burning peaks sharply every autumn in September and October, accounting for over 70% of annual fires.
+              </span>
+            </div>
+            <div id="plot-calendar-heatmap" class="plotly-chart"></div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Before vs. After Harmonization -->
+        <div id="tab-timeline" class="tab-panel">
+          <div class="chart-box">
+            <div class="takeaway-banner">
+              <span class="takeaway-icon">🛰️</span>
+              <span class="takeaway-text">
+                SpectraNet eliminates the artificial Jan 2012 sensor gap, seamlessly harmonizing 1km MODIS into continuous 375m VIIRS resolution.
+              </span>
+            </div>
+            <div id="plot-timeline" class="plotly-chart"></div>
+          </div>
+        </div>
+
+        <!-- Tab 3: AI Models Accuracy Arena -->
+        <div id="tab-models" class="tab-panel">
+          <div class="chart-box">
+            <div class="model-selection-bar">
+              <label for="model-selector">Select Active Architecture:</label>
+              <select id="model-selector" class="clean-select">
+                <option value="6. SpectraNet Hybrid Stacking" selected>6. SpectraNet Hybrid Stacking (Ensemble)</option>
+                <option value="5. Huber-Loss GBDT & ExtraTrees Blend">5. Huber-Loss GBDT & ExtraTrees Blend</option>
+                <option value="3. Deep MLP-ResNet Neural Net">3. Deep MLP-ResNet Neural Net</option>
+                <option value="4. Temporal Sequence 1D-MLP Neural Net">4. Temporal Sequence 1D-MLP Neural Net</option>
+                <option value="2. Huber Robust Linear Regressor">2. Huber Robust Linear Regressor</option>
+                <option value="1. Statistical Baseline">1. Statistical Scaling Baseline</option>
+              </select>
+            </div>
+            <div id="plot-model-comparison" class="plotly-chart"></div>
+          </div>
+        </div>
+
+        <!-- Tab 4: 2026 Forecast & Smoke Impact -->
+        <div id="tab-forecast" class="tab-panel">
+          <div class="chart-box">
+            <div class="forecast-impact-strip">
+              <div class="impact-pill">
+                <span class="impact-title">ESTIMATED CO₂ RELEASED</span>
+                <span id="forecast-co2-val" class="impact-num">-- kt</span>
+                <span class="impact-desc">Seiler & Crutzen Carbon Equation</span>
+              </div>
+              <div class="impact-pill">
+                <span class="impact-title">SMOKE (PM₂.₅) HEALTH AEROSOL</span>
+                <span id="forecast-pm25-val" class="impact-num">-- Tons</span>
+                <span class="impact-desc">Air Quality Respiratory Impact</span>
+              </div>
+            </div>
+            <div id="plot-forecast" class="plotly-chart-fc"></div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+  </div>
+
+  <!-- Custom Coordinates Modal -->
+  <div id="modal-bbox" class="modal hidden">
+    <div class="modal-dialog glassmorphic">
+      <div class="modal-header">
+        <h3>Custom Lat/Lon Coordinates</h3>
+        <button id="btn-close-modal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Define any bounding box on Earth to run live satellite harmonization:</p>
+        <div class="bbox-grid">
+          <div class="form-group">
+            <label>West Longitude</label>
+            <input type="number" id="bbox-min-lon" step="0.1" value="30.0">
+          </div>
+          <div class="form-group">
+            <label>South Latitude</label>
+            <input type="number" id="bbox-min-lat" step="0.1" value="30.0">
+          </div>
+          <div class="form-group">
+            <label>East Longitude</label>
+            <input type="number" id="bbox-max-lon" step="0.1" value="32.2">
+          </div>
+          <div class="form-group">
+            <label>North Latitude</label>
+            <input type="number" id="bbox-max-lat" step="0.1" value="31.6">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-apply-bbox" class="btn-action-primary">Apply & Dive In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tiny Non-Blocking Floating Telemetry Pill (Never Covers the Screen!) -->
+  <div id="floating-sync-pill" class="floating-sync-pill hidden">
+    <span class="pill-dot"></span>
+    <span id="pill-text">Synchronizing Satellite Telemetry...</span>
+  </div>
+
+  <!-- External CDN Libraries -->
+  <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/globe.gl@2.32.0/dist/globe.gl.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <!-- Application Logic -->
+  <script src="static/app.js"></script>
+</body>
+</html>

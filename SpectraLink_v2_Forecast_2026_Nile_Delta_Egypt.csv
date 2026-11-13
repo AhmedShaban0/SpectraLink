@@ -1,0 +1,7 @@
+Date,Year,Month,Month_Name,Forecast_Hotspots,CI_95_Lower,CI_95_Upper,Projected_Season_Class,Early_Warning_Alert
+2026-01-01,2026,1,Jan,1.0,0.0,6.5,Quiet Season,✅ Quiet Season
+2026-02-01,2026,2,Feb,1.4,0.0,6.9,Moderate Activity,✅ Quiet Season
+2026-03-01,2026,3,Mar,21.6,0.0,163.4,Peak Burning Season,🚨 HIGH ALERT: Peak Burning Season
+2026-04-01,2026,4,Apr,8.8,0.0,44.0,Quiet Season,⚠️ WATCH: Moderate Burning
+2026-05-01,2026,5,May,16.2,0.0,98.7,Moderate Activity,⚠️ WATCH: Moderate Burning
+2026-06-01,2026,6,Jun,11.8,0.0,65.8,Moderate Activity,⚠️ WATCH: Moderate Burning
