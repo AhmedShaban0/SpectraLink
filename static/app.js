@@ -1197,7 +1197,211 @@ function initEasterEgg() {
   });
 }
 
+// ============================================================================
+// CINEMATIC AUDIO SYNTHESIZER (Web Audio API - 100% Offline & Procedural)
+// ============================================================================
+let audioCtx = null;
+
+function getAudioContext() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      audioCtx = new AudioContextClass();
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+// 💥 1. Planetary Supernova Explosion Sound
+function playSupernovaExplosionSound() {
+  const customAudio = new Audio('static/explosion.mp3');
+  const playPromise = customAudio.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(() => synthesizeExplosionSound());
+  } else {
+    synthesizeExplosionSound();
+  }
+}
+
+function synthesizeExplosionSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+
+  // --- LAYER 1: Deep Sub-Bass Seismic Boom (Drops from 180Hz down to 26Hz) ---
+  const oscSub = ctx.createOscillator();
+  const subGain = ctx.createGain();
+  oscSub.type = 'sawtooth';
+  oscSub.frequency.setValueAtTime(180, now);
+  oscSub.frequency.exponentialRampToValueAtTime(26, now + 2.6);
+
+  subGain.gain.setValueAtTime(0.95, now);
+  subGain.gain.exponentialRampToValueAtTime(0.001, now + 2.8);
+
+  const subFilter = ctx.createBiquadFilter();
+  subFilter.type = 'lowpass';
+  subFilter.frequency.setValueAtTime(480, now);
+  subFilter.frequency.exponentialRampToValueAtTime(55, now + 2.2);
+
+  oscSub.connect(subFilter);
+  subFilter.connect(subGain);
+  subGain.connect(ctx.destination);
+
+  oscSub.start(now);
+  oscSub.stop(now + 2.9);
+
+  // --- LAYER 2: Massive Shockwave White Noise Blast ---
+  const bufferSize = Math.floor(ctx.sampleRate * 2.8);
+  const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = Math.random() * 2 - 1;
+  }
+
+  const whiteNoise = ctx.createBufferSource();
+  whiteNoise.buffer = noiseBuffer;
+
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = 'lowpass';
+  noiseFilter.frequency.setValueAtTime(2200, now);
+  noiseFilter.frequency.exponentialRampToValueAtTime(80, now + 2.4);
+  noiseFilter.Q.setValueAtTime(3.5, now);
+
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(1.0, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 2.6);
+
+  whiteNoise.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(ctx.destination);
+
+  whiteNoise.start(now);
+  whiteNoise.stop(now + 2.8);
+
+  // --- LAYER 3: Distorted Tectonic Crust Fracture Crunch ---
+  const crunchOsc = ctx.createOscillator();
+  const crunchGain = ctx.createGain();
+  crunchOsc.type = 'triangle';
+  crunchOsc.frequency.setValueAtTime(240, now);
+  crunchOsc.frequency.exponentialRampToValueAtTime(40, now + 1.2);
+
+  const distortion = ctx.createWaveShaper();
+  const n_samples = 44100;
+  const curve = new Float32Array(n_samples);
+  const deg = Math.PI / 180;
+  const k = 45;
+  for (let i = 0; i < n_samples; ++i) {
+    const x = (i * 2) / n_samples - 1;
+    curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+  }
+  distortion.curve = curve;
+  distortion.oversample = '4x';
+
+  crunchGain.gain.setValueAtTime(0.55, now);
+  crunchGain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+
+  crunchOsc.connect(distortion);
+  distortion.connect(crunchGain);
+  crunchGain.connect(ctx.destination);
+
+  crunchOsc.start(now);
+  crunchOsc.stop(now + 1.5);
+}
+
+// 🌍 2. Quantum Time-Reversal & Planetary Rebirth Sound
+function playQuantumRestorationSound() {
+  const customAudio = new Audio('static/restore.mp3');
+  const playPromise = customAudio.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(() => synthesizeRestorationSound());
+  } else {
+    synthesizeRestorationSound();
+  }
+}
+
+function synthesizeRestorationSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+
+  // --- LAYER 1: Reverse Temporal Suction Swell (sweeps upward from 120Hz to 3200Hz) ---
+  const bufferSize = Math.floor(ctx.sampleRate * 1.35);
+  const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = Math.random() * 2 - 1;
+  }
+
+  const whiteNoise = ctx.createBufferSource();
+  whiteNoise.buffer = noiseBuffer;
+
+  const sweepFilter = ctx.createBiquadFilter();
+  sweepFilter.type = 'bandpass';
+  sweepFilter.Q.setValueAtTime(6.5, now);
+  sweepFilter.frequency.setValueAtTime(130, now);
+  sweepFilter.frequency.exponentialRampToValueAtTime(3200, now + 1.2);
+
+  const sweepGain = ctx.createGain();
+  sweepGain.gain.setValueAtTime(0.06, now);
+  sweepGain.gain.exponentialRampToValueAtTime(0.85, now + 1.15);
+  sweepGain.gain.exponentialRampToValueAtTime(0.001, now + 1.32);
+
+  whiteNoise.connect(sweepFilter);
+  sweepFilter.connect(sweepGain);
+  sweepGain.connect(ctx.destination);
+
+  whiteNoise.start(now);
+  whiteNoise.stop(now + 1.35);
+
+  // --- LAYER 2: Quantum Warp Riser Oscillator ---
+  const oscRiser = ctx.createOscillator();
+  const riserGain = ctx.createGain();
+  oscRiser.type = 'sine';
+  oscRiser.frequency.setValueAtTime(60, now);
+  oscRiser.frequency.exponentialRampToValueAtTime(528, now + 1.15);
+
+  riserGain.gain.setValueAtTime(0.12, now);
+  riserGain.gain.exponentialRampToValueAtTime(0.75, now + 1.15);
+  riserGain.gain.exponentialRampToValueAtTime(0.001, now + 1.25);
+
+  oscRiser.connect(riserGain);
+  riserGain.connect(ctx.destination);
+
+  oscRiser.start(now);
+  oscRiser.stop(now + 1.3);
+
+  // --- LAYER 3: Rebirth Celestial Chime Chord (Harmonic lock at flash) ---
+  setTimeout(() => {
+    if (!audioCtx) return;
+    const chordTime = audioCtx.currentTime;
+    const freqs = [528, 660, 792, 1056];
+    freqs.forEach((freq, idx) => {
+      const chimeOsc = audioCtx.createOscillator();
+      const chimeGain = audioCtx.createGain();
+      chimeOsc.type = 'sine';
+      chimeOsc.frequency.setValueAtTime(freq, chordTime);
+
+      const amp = 0.30 / (idx + 1);
+      chimeGain.gain.setValueAtTime(amp, chordTime);
+      chimeGain.gain.exponentialRampToValueAtTime(0.0001, chordTime + 1.8);
+
+      chimeOsc.connect(chimeGain);
+      chimeGain.connect(audioCtx.destination);
+
+      chimeOsc.start(chordTime);
+      chimeOsc.stop(chordTime + 1.9);
+    });
+  }, 900);
+}
+
+
 function destroyEarth() {
+  playSupernovaExplosionSound();
   if (!state.globe) return;
   const scene = state.globe.scene();
   if (!scene) return;
@@ -1417,6 +1621,7 @@ function animateExplosion() {
 }
 
 function restoreEarth() {
+  playQuantumRestorationSound();
   if (!supernova.isDestroyed || supernova.isRestoring) return;
 
   console.log('⏳ INITIATING QUANTUM TEMPORAL INVERSION: RESTORING EARTH...');
