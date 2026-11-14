@@ -159,8 +159,8 @@ const SATELLITE_CONFIGS = [
     speed: 0.0034,       // orbital radians per frame
     phase0: 0.0,         // initial anomaly
     swathRadius: 13.5,   // wide 2,330 km swath
-    swathColor: 0x38BDF8,// Vibrant Cyan
-    beaconColor: 0xEF4444, // Red strobe
+    swathColor: 0x10B981,// Vibrant Emerald Green (Land & Vegetation EOS AM-1)
+    beaconColor: 0x34D399, // Bright Mint/Emerald strobe
     badgeClass: 'terra',
     dotClass: 'terra',
     badgeLabel: 'MODIS Terra',
@@ -178,7 +178,7 @@ const SATELLITE_CONFIGS = [
     speed: 0.0032,
     phase0: 2.356,       // 135 deg
     swathRadius: 13.5,
-    swathColor: 0x38BDF8,// Vibrant Cyan
+    swathColor: 0x0EA5E9,// Vibrant Ocean Azure / Sky Cyan (Oceans & Water EOS PM-1)
     beaconColor: 0x38BDF8, // Cyan strobe
     badgeClass: 'aqua',
     dotClass: 'aqua',
@@ -422,9 +422,9 @@ function createTerraModel(config, materials) {
   // Bronze/gold MODIS instrument box
   const modisBox = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.8, 1.4), materials.goldFoilMat);
   nadir.add(modisBox);
-  // Optical scanner window facing Earth (+Z)
+  // Optical scanner window facing Earth (+Z) with Terra's vibrant emerald green
   const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.25, 16),
-    new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x38bdf8, emissiveIntensity: 1.2 })
+    new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 1.2 })
   );
   lens.rotation.x = Math.PI / 2;
   lens.position.set(0, 0, 0.75);
@@ -533,7 +533,7 @@ function createAquaModel(config, materials) {
   const modisBox = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.0, 1.4), materials.silverMetalMat);
   nadir.add(modisBox);
   const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.25, 16),
-    new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x38bdf8, emissiveIntensity: 1.2 })
+    new THREE.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0ea5e9, emissiveIntensity: 1.2 })
   );
   lens.rotation.x = Math.PI / 2; lens.position.set(0, 0, 0.75);
   nadir.add(lens);
@@ -713,19 +713,22 @@ function createRealisticSatelliteModel(config) {
 
   const satGroup = spacecraft.satGroup;
 
-  // Volumetric Nadir Scanning Swath Cone (Projected from sensor in +Z to Earth surface)
+  // Volumetric Nadir Scanning Swath Cone (Projected from satellite sensor down to Earth surface)
+  // Narrow apex (tip) is at the satellite sensor (0, 0, 2.4); wide circular base fans out to Earth surface (+coneHeight)
   const coneHeight = config.altitude - 100.0; // Distance to Earth surface (R_earth = 100)
   const swathRadius = config.swathRadius;
 
   const coneGeo = new THREE.ConeGeometry(swathRadius, coneHeight, 32, 1, true);
-  // Re-orient cone so apex is at (0, 0, 0) and base extends down along +Z toward Earth
-  coneGeo.translate(0, coneHeight / 2, 0);
-  coneGeo.rotateX(Math.PI / 2); // Rotated to point along +Z (TOWARDS EARTH)
+  // In Three.js ConeGeometry, apex is at +coneHeight/2 and base is at -coneHeight/2.
+  // Translate by -coneHeight/2 moves apex to (0, 0, 0) and base to (0, -coneHeight, 0).
+  // rotateX(-PI/2) rotates the base to +Z = +coneHeight (toward Earth) while keeping apex at (0, 0, 0)!
+  coneGeo.translate(0, -coneHeight / 2, 0);
+  coneGeo.rotateX(-Math.PI / 2);
 
   const coneMat = new THREE.MeshBasicMaterial({
     color: config.swathColor,
     transparent: true,
-    opacity: 0.35,
+    opacity: 0.28,
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
     depthWrite: false,
