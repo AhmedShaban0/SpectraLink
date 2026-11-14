@@ -316,161 +316,411 @@ function generateProceduralSpaceTextures() {
   spacecraftState.solarArrayTexture = new THREE.CanvasTexture(solarCanvas);
 }
 
-// Builds a realistic 3D spacecraft model sized to be clearly visible from orbit
-function createRealisticSatelliteModel(config) {
-  generateProceduralSpaceTextures();
+// =========================================================================
+// AUTHENTIC 3D NASA SPACECRAFT MODELS (TERRA, AQUA, VIIRS)
+// Procedurally modeled from authentic NASA & NOAA spacecraft engineering schematics
+// Orientation Convention:
+// In Three.js, satGroup.lookAt(0, 0, 0) locks the local +Z axis toward Earth center (Nadir).
+// Local -Z points toward deep space and the camera (Zenith).
+// Local +Y is the forward flight direction, ±X are lateral (solar wings / side booms).
+// =========================================================================
 
+// 1. MODIS Terra (EOS AM-1)
+// Authentic Features: Sloped white/grey bus, gold front end-cap with circular scanner
+// and 4 corner horns, 4-panel articulated solar wing (port side), underbelly robotic dish boom.
+function createTerraModel(config, materials) {
   const satGroup = new THREE.Group();
   satGroup.name = config.name;
 
-  // Prominent space materials with subtle emissive lighting
-  const goldFoilMat = new THREE.MeshStandardMaterial({
-    map: spacecraftState.goldFoilTexture,
-    color: 0xffcc33,
-    emissive: 0x78350f,
-    emissiveIntensity: 0.35,
-    metalness: 0.85,
-    roughness: 0.25,
+  // Main elongated white/grey chassis
+  const busGeo = new THREE.BoxGeometry(4.2, 7.6, 3.6);
+  const bus = new THREE.Mesh(busGeo, materials.whiteRadiatorMat);
+  satGroup.add(bus);
+
+  // Sloped chamfered zenith deck (-Z space-facing)
+  const roofGeo = new THREE.CylinderGeometry(1.6, 2.1, 7.2, 4);
+  const roof = new THREE.Mesh(roofGeo, materials.whiteRadiatorMat);
+  roof.rotation.y = Math.PI / 4;
+  roof.rotation.x = Math.PI / 2;
+  roof.position.set(0, 0, -1.9);
+  satGroup.add(roof);
+
+  // Dark side radiator panels (±X)
+  const radGeo = new THREE.BoxGeometry(0.25, 3.4, 2.0);
+  const rL = new THREE.Mesh(radGeo, materials.darkRadiatorMat);
+  rL.position.set(-2.15, 0.4, 0);
+  satGroup.add(rL);
+  const rR = new THREE.Mesh(radGeo, materials.darkRadiatorMat);
+  rR.position.set(2.15, 0.4, 0);
+  satGroup.add(rR);
+
+  // Signature Front End-Cap (+Y: Gold foil block with central circular aperture)
+  const capGeo = new THREE.BoxGeometry(4.4, 1.8, 3.8);
+  const cap = new THREE.Mesh(capGeo, materials.goldFoilMat);
+  cap.position.set(0, 4.6, 0);
+  satGroup.add(cap);
+
+  const apGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.35, 24);
+  const ap = new THREE.Mesh(apGeo, materials.darkCompositeMat);
+  ap.rotation.x = Math.PI / 2;
+  ap.position.set(0, 5.55, 0);
+  satGroup.add(ap);
+
+  // 4 golden corner thruster horns on the front gold cap
+  const hornGeo = new THREE.ConeGeometry(0.22, 0.55, 8);
+  [[-1.7, 1.4], [1.7, 1.4], [-1.7, -1.4], [1.7, -1.4]].forEach(([cx, cz]) => {
+    const h = new THREE.Mesh(hornGeo, materials.goldFoilMat);
+    h.rotation.x = Math.PI / 2;
+    h.position.set(cx, 5.6, cz);
+    satGroup.add(h);
   });
 
-  const whiteRadiatorMat = new THREE.MeshStandardMaterial({
-    color: 0xf8fafc,
-    emissive: 0x334155,
-    emissiveIntensity: 0.25,
-    metalness: 0.15,
-    roughness: 0.2,
-  });
+  // ASTER / MISR optical sensor housing on zenith spine (-Z)
+  const asterBox = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.0), materials.goldFoilMat);
+  asterBox.position.set(0, -1.4, -2.1);
+  satGroup.add(asterBox);
+  const asterLens = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.25, 12), materials.darkCompositeMat);
+  asterLens.rotation.x = Math.PI / 2;
+  asterLens.position.set(0, -1.4, -2.65);
+  satGroup.add(asterLens);
 
-  const darkCompositeMat = new THREE.MeshStandardMaterial({
-    color: 0x111827,
-    metalness: 0.5,
-    roughness: 0.5,
-  });
+  // 4-Panel Articulated Solar Wing extending to port side (-X)
+  const yoke = new THREE.Group();
+  yoke.position.set(-2.1, 0.2, 0);
+  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 2.8, 12), materials.silverMetalMat);
+  boom.rotation.z = Math.PI / 2;
+  boom.position.set(-1.4, 0, 0);
+  yoke.add(boom);
 
-  const silverMetalMat = new THREE.MeshStandardMaterial({
-    color: 0xe2e8f0,
-    emissive: 0x475569,
-    emissiveIntensity: 0.2,
-    metalness: 0.92,
-    roughness: 0.18,
-  });
+  const panelGroup = new THREE.Group();
+  panelGroup.position.set(-2.8, 0, 0);
+  for (let p = 0; p < 4; p++) {
+    const pGeo = new THREE.BoxGeometry(3.3, 5.8, 0.22);
+    const pMesh = new THREE.Mesh(pGeo, [
+      materials.darkCompositeMat,
+      materials.darkCompositeMat,
+      materials.darkCompositeMat,
+      materials.darkCompositeMat,
+      materials.solarPanelMat, // Front
+      materials.solarPanelMat, // Back (double-sided solar visibility)
+    ]);
+    pMesh.position.set(-1.7 - p * 3.4, 0, 0);
+    panelGroup.add(pMesh);
+    if (p < 3) {
+      const hinge = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 5.7, 8), materials.silverMetalMat);
+      hinge.position.set(-3.4 - p * 3.4, 0, 0);
+      panelGroup.add(hinge);
+    }
+  }
+  yoke.add(panelGroup);
+  satGroup.add(yoke);
 
-  const solarPanelMat = new THREE.MeshStandardMaterial({
-    map: spacecraftState.solarArrayTexture,
-    emissive: 0x1e3a8a,
-    emissiveIntensity: 0.25,
-    metalness: 0.70,
-    roughness: 0.20,
-  });
+  // Earth-Facing Nadir (+Z) Instrument Cluster & Articulated Boom Dish
+  const nadir = new THREE.Group();
+  nadir.position.set(0, -0.4, 1.9);
 
-  // 1. Spacecraft Bus (Main Body) - Scaled to be clearly visible from orbit (~4.5 x 7.0 x 4.5)
-  // Rectangular avionics chassis wrapped in gold Kapton foil
-  const busGeo = new THREE.BoxGeometry(4.4, 6.8, 4.4);
-  const busMesh = new THREE.Mesh(busGeo, goldFoilMat);
-  satGroup.add(busMesh);
+  // Bronze/gold MODIS instrument box
+  const modisBox = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.8, 1.4), materials.goldFoilMat);
+  nadir.add(modisBox);
+  // Optical scanner window facing Earth (+Z)
+  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.25, 16),
+    new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x38bdf8, emissiveIntensity: 1.2 })
+  );
+  lens.rotation.x = Math.PI / 2;
+  lens.position.set(0, 0, 0.75);
+  nadir.add(lens);
 
-  // White radiator heat-shield panel on cold side (+X)
-  const radGeo = new THREE.BoxGeometry(0.25, 5.6, 4.0);
-  const radMesh = new THREE.Mesh(radGeo, whiteRadiatorMat);
-  radMesh.position.set(2.28, 0, 0);
-  satGroup.add(radMesh);
+  // Articulated boom arm holding downward-canted dish (matching Terra reference photo)
+  const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 2.4, 8), materials.silverMetalMat);
+  arm1.position.set(1.1, -1.6, 0.9); arm1.rotation.x = 0.4; arm1.rotation.z = -0.3;
+  nadir.add(arm1);
+  const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.0, 8), materials.silverMetalMat);
+  arm2.position.set(1.5, -2.7, 1.8); arm2.rotation.x = 0.8;
+  nadir.add(arm2);
+  const dish = new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.44), materials.silverMetalMat);
+  dish.position.set(1.5, -3.4, 2.5); dish.rotation.x = 1.1; dish.rotation.y = 0.3;
+  nadir.add(dish);
+  satGroup.add(nadir);
 
-  // Structural equipment bay frame on zenith (+Z, space-facing)
-  const zenithFrameGeo = new THREE.BoxGeometry(4.8, 4.8, 0.6);
-  const zenithFrameMesh = new THREE.Mesh(zenithFrameGeo, darkCompositeMat);
-  zenithFrameMesh.position.set(0, 0, 2.3);
-  satGroup.add(zenithFrameMesh);
-
-  // 2. Asymmetric Single-Wing Solar Array (Signature NASA EOS Design)
-  const solarYokeGroup = new THREE.Group();
-  solarYokeGroup.position.set(-2.2, 0.5, 0);
-
-  // Articulated yoke boom
-  const boomGeo = new THREE.CylinderGeometry(0.24, 0.24, 3.2, 12);
-  const boomMesh = new THREE.Mesh(boomGeo, silverMetalMat);
-  boomMesh.rotation.z = Math.PI / 2;
-  boomMesh.position.set(-1.6, 0, 0);
-  solarYokeGroup.add(boomMesh);
-
-  // Large rectangular solar panel wing (13.5 units wide x 5.8 units high)
-  const panelGeo = new THREE.BoxGeometry(13.5, 5.8, 0.25);
-  const panelMaterials = [
-    darkCompositeMat,
-    darkCompositeMat,
-    darkCompositeMat,
-    darkCompositeMat,
-    solarPanelMat,    // +Z front face (photovoltaic cells facing sun)
-    darkCompositeMat, // -Z back face (carbon composite)
-  ];
-  const solarPanelMesh = new THREE.Mesh(panelGeo, panelMaterials);
-  solarPanelMesh.position.set(-9.8, 0, 0);
-  solarYokeGroup.add(solarPanelMesh);
-
-  satGroup.add(solarYokeGroup);
-
-  // 3. Parabolic High-Gain Dish Antenna (Mounted on +Z space-facing deck)
-  const dishGroup = new THREE.Group();
-  dishGroup.position.set(1.1, 1.1, 2.6);
-
-  const mastGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.4, 8);
-  const mastMesh = new THREE.Mesh(mastGeo, silverMetalMat);
-  mastMesh.position.set(0, 0, 1.2);
-  mastMesh.rotation.x = Math.PI / 2;
-  dishGroup.add(mastMesh);
-
-  const dishGeo = new THREE.SphereGeometry(2.0, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.44);
-  const dishMesh = new THREE.Mesh(dishGeo, silverMetalMat);
-  dishMesh.position.set(0, 0, 2.4);
-  dishMesh.rotation.x = -0.35;
-  dishGroup.add(dishMesh);
-
-  const feedGeo = new THREE.ConeGeometry(0.35, 0.9, 8);
-  const feedMesh = new THREE.Mesh(feedGeo, goldFoilMat);
-  feedMesh.position.set(0, 0, 2.0);
-  feedMesh.rotation.x = -0.35;
-  dishGroup.add(feedMesh);
-
-  satGroup.add(dishGroup);
-
-  // Active Navigation Beacon LED on Zenith
+  // Zenith (-Z) Navigation Strobe Beacon
   const beaconGeo = new THREE.SphereGeometry(0.4, 12, 12);
   const beaconMat = new THREE.MeshBasicMaterial({ color: config.beaconColor });
   const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
-  beaconMesh.position.set(-1.0, 1.0, 2.7);
+  beaconMesh.position.set(0, 0, -2.8);
   satGroup.add(beaconMesh);
 
-  // 4. Nadir Fire Scanning Instrument Deck (Facing Earth in -Z direction)
-  const nadirGroup = new THREE.Group();
-  nadirGroup.position.set(0, 0, -2.4); // Local -Z points to Earth center when lookAt(0,0,0) is called!
+  return { satGroup, solarYoke: yoke, beaconMesh };
+}
 
-  const instBoxGeo = new THREE.BoxGeometry(3.6, 3.6, 1.4);
-  const instBoxMesh = new THREE.Mesh(instBoxGeo, silverMetalMat);
-  nadirGroup.add(instBoxMesh);
+// 2. MODIS Aqua (EOS PM-1)
+// Authentic Features: Gold/white chassis, forward AMSR-E white scoop wedge,
+// large canted solar wing (starboard side), signature overhead golden tripod tower with parabolic dish.
+function createAquaModel(config, materials) {
+  const satGroup = new THREE.Group();
+  satGroup.name = config.name;
 
-  // Germanium optical scan mirror window (points down at Earth in -Z)
-  const lensGeo = new THREE.CylinderGeometry(0.9, 0.9, 0.25, 16);
-  const lensMat = new THREE.MeshStandardMaterial({
-    color: config.swathColor,
-    emissive: config.swathColor,
-    emissiveIntensity: 1.0,
-    roughness: 0.1,
-    metalness: 0.9,
+  // Main Chassis (Gold foil fuselage + white radiators)
+  const bus = new THREE.Mesh(new THREE.BoxGeometry(4.4, 8.4, 4.0), materials.goldFoilMat);
+  satGroup.add(bus);
+
+  const rad = new THREE.Mesh(new THREE.BoxGeometry(4.5, 4.6, 2.2), materials.whiteRadiatorMat);
+  rad.position.set(0, -1.6, 1.0);
+  satGroup.add(rad);
+
+  // Forward AMSR-E white sunshield scoop/baffle wedge (+Y, +Z)
+  const scoop = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.6, 2.2), materials.whiteRadiatorMat);
+  scoop.position.set(0, 4.8, 1.0);
+  scoop.rotation.x = -0.38;
+  satGroup.add(scoop);
+
+  // Large Tilted Solar Array Wing extending to starboard (+X)
+  const solarGroup = new THREE.Group();
+  solarGroup.position.set(2.2, 0.4, 0);
+  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 3.2, 12), materials.silverMetalMat);
+  boom.rotation.z = -Math.PI / 2;
+  boom.position.set(1.6, 0, 0);
+  solarGroup.add(boom);
+
+  // Wing tilted at ~28 degrees on its gimbal
+  const wing = new THREE.Group();
+  wing.position.set(9.6, 0, 0);
+  wing.rotation.y = -0.48; // Signature Aqua canted solar wing
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(15.2, 6.6, 0.25), [
+    materials.darkCompositeMat,
+    materials.darkCompositeMat,
+    materials.darkCompositeMat,
+    materials.darkCompositeMat,
+    materials.solarPanelMat, // Front
+    materials.solarPanelMat, // Back (double-sided)
+  ]);
+  wing.add(panel);
+  solarGroup.add(wing);
+  satGroup.add(solarGroup);
+
+  // SIGNATURE OVERHEAD HIGH-GAIN DISH ON ELEVATED GOLD TRIPOD (-Z Space-Facing Zenith Deck)
+  const tripodGroup = new THREE.Group();
+  tripodGroup.position.set(0, 1.0, -2.0);
+
+  // 3 gold tubular struts forming high tripod tower
+  const strutGeo = new THREE.CylinderGeometry(0.12, 0.12, 4.0, 8);
+  const s1 = new THREE.Mesh(strutGeo, materials.goldFoilMat);
+  s1.position.set(-1.1, -0.7, -1.8); s1.rotation.x = 0.24; s1.rotation.y = 0.30;
+  tripodGroup.add(s1);
+  const s2 = new THREE.Mesh(strutGeo, materials.goldFoilMat);
+  s2.position.set(1.1, -0.7, -1.8); s2.rotation.x = 0.24; s2.rotation.y = -0.30;
+  tripodGroup.add(s2);
+  const s3 = new THREE.Mesh(strutGeo, materials.goldFoilMat);
+  s3.position.set(0, 1.5, -1.8); s3.rotation.x = -0.34;
+  tripodGroup.add(s3);
+
+  // Overhead Large Parabolic Dish Antenna with golden rim ring (Scaled to authentic size)
+  const dish = new THREE.Mesh(new THREE.SphereGeometry(3.0, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.44), materials.silverMetalMat);
+  dish.position.set(0, 0.4, -3.8); dish.rotation.x = 0.34;
+  tripodGroup.add(dish);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(2.95, 0.14, 8, 28), materials.goldFoilMat);
+  rim.position.set(0, 0.4, -3.8); rim.rotation.x = 0.34;
+  tripodGroup.add(rim);
+
+  // Forward equipment hood on zenith deck
+  const hood = new THREE.Mesh(new THREE.BoxGeometry(3.0, 2.6, 1.8), materials.whiteRadiatorMat);
+  hood.position.set(0, 3.5, -2.4);
+  tripodGroup.add(hood);
+  satGroup.add(tripodGroup);
+
+  // Earth-Facing Nadir (+Z) MODIS Scanner Deck
+  const nadir = new THREE.Group();
+  nadir.position.set(0, -1.2, 2.1);
+  const modisBox = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.0, 1.4), materials.silverMetalMat);
+  nadir.add(modisBox);
+  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.25, 16),
+    new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x38bdf8, emissiveIntensity: 1.2 })
+  );
+  lens.rotation.x = Math.PI / 2; lens.position.set(0, 0, 0.75);
+  nadir.add(lens);
+  satGroup.add(nadir);
+
+  // Zenith Strobe Beacon
+  const beaconGeo = new THREE.SphereGeometry(0.4, 12, 12);
+  const beaconMat = new THREE.MeshBasicMaterial({ color: config.beaconColor });
+  const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
+  beaconMesh.position.set(0, -2.5, -2.4);
+  satGroup.add(beaconMesh);
+
+  return { satGroup, solarYoke: solarGroup, beaconMesh };
+}
+
+// 3. VIIRS (Suomi-NPP / JPSS)
+// Authentic Features: Heavy gold Kapton block chassis with structural module ribs,
+// underside multi-tile optical detector grid with fiery orange germanium lens,
+// slanted rear elevated solar wing, bottom cryogenic radiator cooler chute, side boom steerable dish.
+function createViirsModel(config, materials) {
+  const satGroup = new THREE.Group();
+  satGroup.name = config.name;
+
+  // Main Chassis: Heavy crinkled gold Kapton block
+  const bus = new THREE.Mesh(new THREE.BoxGeometry(5.0, 7.8, 4.6), materials.goldFoilMat);
+  satGroup.add(bus);
+
+  // Structural module division ribs
+  const rib1 = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.25, 4.8), materials.darkCompositeMat);
+  rib1.position.set(0, 1.4, 0); satGroup.add(rib1);
+  const rib2 = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.25, 4.8), materials.darkCompositeMat);
+  rib2.position.set(0, -1.8, 0); satGroup.add(rib2);
+
+  // Earth-Facing Nadir (+Z) Multi-Detector Array Grid (Signature VIIRS feature)
+  const detGroup = new THREE.Group();
+  detGroup.position.set(0, 0, 2.35);
+  const detBase = new THREE.Mesh(new THREE.BoxGeometry(4.6, 7.2, 0.15), materials.darkRadiatorMat);
+  detGroup.add(detBase);
+
+  const tileMat = new THREE.MeshStandardMaterial({
+    color: 0x1e3a8a, emissive: 0x1d4ed8, emissiveIntensity: 0.45, roughness: 0.15, metalness: 0.8
   });
-  const lensMesh = new THREE.Mesh(lensGeo, lensMat);
-  lensMesh.rotation.x = Math.PI / 2;
-  lensMesh.position.set(0, 0, -0.75);
-  nadirGroup.add(lensMesh);
+  for (let tx = -1.5; tx <= 1.5; tx += 1.5) {
+    for (let ty = -2.4; ty <= 2.4; ty += 1.6) {
+      const tile = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.4, 0.22), tileMat);
+      tile.position.set(tx, ty, 0.05);
+      detGroup.add(tile);
+    }
+  }
+  // VIIRS Germanium Scan Mirror Lens (Fiery Orange emissive)
+  const vLens = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.35, 16),
+    new THREE.MeshStandardMaterial({ color: 0xea580c, emissive: 0xea580c, emissiveIntensity: 1.0 })
+  );
+  vLens.rotation.x = Math.PI / 2; vLens.position.set(0, 0, 0.22);
+  detGroup.add(vLens);
+  satGroup.add(detGroup);
 
-  satGroup.add(nadirGroup);
+  // Slanted Elevated Rear Solar Array Wing (-Y, -Z)
+  const solGroup = new THREE.Group();
+  solGroup.position.set(0, -4.0, -1.8);
+  const pylon = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.6, 3.2), materials.goldFoilMat);
+  pylon.position.set(0, 0, -1.4); pylon.rotation.x = 0.45;
+  solGroup.add(pylon);
 
-  // 5. Volumetric Nadir Scanning Swath Cone (Projected from sensor in -Z to Earth surface)
+  const wing = new THREE.Group();
+  wing.position.set(0, -0.5, -3.0);
+  wing.rotation.x = 0.68;
+  const wingMesh = new THREE.Mesh(new THREE.BoxGeometry(14.8, 6.8, 0.26), [
+    materials.darkCompositeMat,
+    materials.darkCompositeMat,
+    materials.darkCompositeMat,
+    materials.darkCompositeMat,
+    materials.solarPanelMat, // Front
+    materials.solarPanelMat, // Back (double-sided)
+  ]);
+  wing.add(wingMesh);
+  solGroup.add(wing);
+  satGroup.add(solGroup);
+
+  // SIGNATURE CRYOGENIC RADIATOR SCOOP / CHUTE (Cold-space thermal cooler flared on side)
+  const scoopGroup = new THREE.Group();
+  scoopGroup.position.set(2.8, -2.4, -0.8);
+  const scoopMat = new THREE.MeshStandardMaterial({
+    color: 0xd97706, emissive: 0x92400e, emissiveIntensity: 0.45, metalness: 0.9, roughness: 0.2
+  });
+  const scoopGeo = new THREE.CylinderGeometry(0.7, 1.5, 2.2, 4);
+  const scoop = new THREE.Mesh(scoopGeo, scoopMat);
+  scoop.rotation.z = -Math.PI / 3; scoop.rotation.y = Math.PI / 4;
+  scoopGroup.add(scoop);
+  satGroup.add(scoopGroup);
+
+  // SIDE BOOM STEERABLE ANTENNA (-X side)
+  const antGroup = new THREE.Group();
+  antGroup.position.set(-2.5, 1.4, -0.6);
+  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3.4, 8), materials.goldFoilMat);
+  boom.rotation.z = Math.PI / 2; boom.position.set(-1.7, 0, 0);
+  antGroup.add(boom);
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), materials.goldFoilMat);
+  box.position.set(-3.4, 0, 0);
+  antGroup.add(box);
+  const dish = new THREE.Mesh(new THREE.SphereGeometry(2.0, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.44), materials.darkRadiatorMat);
+  dish.position.set(-4.2, 0, 0); dish.rotation.y = -Math.PI / 2;
+  antGroup.add(dish);
+  satGroup.add(antGroup);
+
+  // Zenith Strobe Beacon
+  const beaconGeo = new THREE.SphereGeometry(0.4, 12, 12);
+  const beaconMat = new THREE.MeshBasicMaterial({ color: config.beaconColor });
+  const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
+  beaconMesh.position.set(0, 2.2, -2.4);
+  satGroup.add(beaconMesh);
+
+  return { satGroup, solarYoke: solGroup, beaconMesh };
+}
+
+// Master Spacecraft Dispatcher & Volumetric Swath Beam Builder
+function createRealisticSatelliteModel(config) {
+  generateProceduralSpaceTextures();
+
+  // Prominent space materials with authentic aerospace lighting
+  const materials = {
+    goldFoilMat: new THREE.MeshStandardMaterial({
+      map: spacecraftState.goldFoilTexture,
+      color: 0xffcc33,
+      emissive: 0x78350f,
+      emissiveIntensity: 0.38,
+      metalness: 0.88,
+      roughness: 0.22,
+    }),
+    whiteRadiatorMat: new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      emissive: 0x334155,
+      emissiveIntensity: 0.28,
+      metalness: 0.15,
+      roughness: 0.2,
+    }),
+    darkRadiatorMat: new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      emissive: 0x0f172a,
+      emissiveIntensity: 0.22,
+      metalness: 0.6,
+      roughness: 0.4,
+    }),
+    darkCompositeMat: new THREE.MeshStandardMaterial({
+      color: 0x111827,
+      metalness: 0.5,
+      roughness: 0.5,
+    }),
+    silverMetalMat: new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      emissive: 0x475569,
+      emissiveIntensity: 0.22,
+      metalness: 0.92,
+      roughness: 0.18,
+    }),
+    solarPanelMat: new THREE.MeshStandardMaterial({
+      map: spacecraftState.solarArrayTexture,
+      color: 0x3b82f6,
+      emissive: 0x1d4ed8,
+      emissiveIntensity: 0.45,
+      metalness: 0.75,
+      roughness: 0.18,
+    }),
+  };
+
+  // Dispatch to the specific authentic spacecraft builder
+  let spacecraft;
+  if (config.id === 'terra') {
+    spacecraft = createTerraModel(config, materials);
+  } else if (config.id === 'aqua') {
+    spacecraft = createAquaModel(config, materials);
+  } else if (config.id === 'viirs') {
+    spacecraft = createViirsModel(config, materials);
+  } else {
+    spacecraft = createTerraModel(config, materials);
+  }
+
+  const satGroup = spacecraft.satGroup;
+
+  // Volumetric Nadir Scanning Swath Cone (Projected from sensor in +Z to Earth surface)
   const coneHeight = config.altitude - 100.0; // Distance to Earth surface (R_earth = 100)
   const swathRadius = config.swathRadius;
 
   const coneGeo = new THREE.ConeGeometry(swathRadius, coneHeight, 32, 1, true);
-  // Re-orient cone so apex is at (0, 0, 0) and base extends down along -Z
-  coneGeo.translate(0, -coneHeight / 2, 0);
-  coneGeo.rotateX(-Math.PI / 2); // Rotated to point along -Z
+  // Re-orient cone so apex is at (0, 0, 0) and base extends down along +Z toward Earth
+  coneGeo.translate(0, coneHeight / 2, 0);
+  coneGeo.rotateX(Math.PI / 2); // Rotated to point along +Z (TOWARDS EARTH)
 
   const coneMat = new THREE.MeshBasicMaterial({
     color: config.swathColor,
@@ -482,7 +732,7 @@ function createRealisticSatelliteModel(config) {
   });
 
   const swathCone = new THREE.Mesh(coneGeo, coneMat);
-  swathCone.position.set(0, 0, -2.4);
+  swathCone.position.set(0, 0, 2.4);
   satGroup.add(swathCone);
 
   // Ground scanning footprint ring on Earth surface
@@ -496,15 +746,15 @@ function createRealisticSatelliteModel(config) {
     depthWrite: false,
   });
   const groundRing = new THREE.Mesh(ringGeo, ringMat);
-  groundRing.position.set(0, 0, -coneHeight - 2.4);
+  groundRing.position.set(0, 0, coneHeight + 2.4);
   satGroup.add(groundRing);
 
   return {
     group: satGroup,
     swathCone: swathCone,
     groundRing: groundRing,
-    beaconMesh: beaconMesh,
-    solarYoke: solarYokeGroup,
+    beaconMesh: spacecraft.beaconMesh,
+    solarYoke: spacecraft.solarYoke,
   };
 }
 
