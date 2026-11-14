@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 120" width="540" height="120">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;800&amp;family=JetBrains+Mono:wght@600;700&amp;display=swap');
+      .txt-brand { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-weight: 800; font-size: 44px; letter-spacing: -0.5px; }
+      .txt-sub { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; letter-spacing: 2px; }
+    </style>
+    <linearGradient id="sl-orbit-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#0284c7" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="sl-orbit-orange" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="50%" stop-color="#ea580c" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="sl-link-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="35%" stop-color="#60a5fa"/>
+      <stop offset="70%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <linearGradient id="sl-bezel-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="rgba(255,255,255,0.25)"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.85"/>
+    </linearGradient>
+    <radialGradient id="sl-earth-bg" cx="45%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#0c4a6e"/>
+      <stop offset="55%" stop-color="#072b44"/>
+      <stop offset="100%" stop-color="#03101c"/>
+    </radialGradient>
+    <radialGradient id="sl-star-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="45%" stop-color="#bae6fd" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sl-core-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#03101c" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="sl-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="sl-flare" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 1. CIRCULAR NASA MISSION PATCH EMBLEM -->
+  <g transform="translate(60, 60)">
+    <circle r="52" fill="#040714"/>
+    <circle r="52" fill="url(#sl-core-glow)"/>
+    <circle r="51" fill="none" stroke="url(#sl-bezel-grad)" stroke-width="1.3"/>
+    <circle r="48" fill="none" stroke="rgba(255, 255, 255, 0.12)" stroke-width="0.8" stroke-dasharray="1.5 4"/>
+
+    <!-- Compass / Telemetry Cardinal Ticks -->
+    <g stroke="rgba(56, 189, 248, 0.75)" stroke-width="1.6">
+      <line x1="0" y1="-51" x2="0" y2="-45"/>
+      <line x1="0" y1="51" x2="0" y2="45"/>
+      <line x1="-51" y1="0" x2="-45" y2="0"/>
+      <line x1="51" y1="0" x2="45" y2="0"/>
+    </g>
+    <!-- Minor 45-deg Ticks -->
+    <g stroke="rgba(249, 115, 22, 0.65)" stroke-width="1.2">
+      <line x1="36" y1="-36" x2="32" y2="-32"/>
+      <line x1="-36" y1="-36" x2="-32" y2="-32"/>
+      <line x1="36" y1="36" x2="32" y2="32"/>
+      <line x1="-36" y1="36" x2="-32" y2="32"/>
+    </g>
+
+    <!-- NASA Space Apps Style Hexagonal Data Telemetry Mesh -->
+    <polygon points="0,-37 32.04,-18.5 32.04,18.5 0,37 -32.04,18.5 -32.04,-18.5" 
+             fill="none" stroke="rgba(56, 189, 248, 0.24)" stroke-width="1" stroke-dasharray="3 3"/>
+
+    <!-- Central Earth Globe (Radius = 26) -->
+    <circle r="26" fill="url(#sl-earth-bg)" stroke="rgba(56, 189, 248, 0.65)" stroke-width="1.4"/>
+    
+    <!-- Stylized Continents Silhouettes -->
+    <path d="M -14 -12 Q -10 -18 -4 -17 Q 2 -16 6 -11 Q 12 -9 15 -3 Q 14 6 7 11 Q 2 15 -6 14 Q -12 12 -15 4 Z" 
+          fill="rgba(56, 189, 248, 0.18)"/>
+    <path d="M -22 -6 Q -18 -14 -14 -13 Q -15 -4 -17 3 Q -20 12 -18 16 Q -23 11 -22 -6 Z" 
+          fill="rgba(56, 189, 248, 0.15)"/>
+
+    <!-- Earth Coordinate Lines -->
+    <ellipse rx="26" ry="6.5" fill="none" stroke="rgba(255, 255, 255, 0.24)" stroke-width="0.8"/>
+    <ellipse rx="22.5" ry="4.5" cy="-12" fill="none" stroke="rgba(255, 255, 255, 0.12)" stroke-width="0.6"/>
+    <ellipse rx="22.5" ry="4.5" cy="12" fill="none" stroke="rgba(255, 255, 255, 0.12)" stroke-width="0.6"/>
+    <ellipse rx="8.5" ry="26" fill="none" stroke="rgba(255, 255, 255, 0.24)" stroke-width="0.8"/>
+    <ellipse rx="17.5" ry="26" fill="none" stroke="rgba(255, 255, 255, 0.14)" stroke-width="0.6"/>
+
+    <!-- ORBIT 1: MODIS Cyan Polar Trajectory (Inclined -35 deg) -->
+    <g transform="rotate(-35)">
+      <ellipse rx="44" ry="16.5" fill="none" stroke="url(#sl-orbit-cyan)" stroke-width="2.4" stroke-dasharray="115 16" filter="url(#sl-glow)"/>
+      <circle cx="-39" cy="7" r="3.2" fill="#38bdf8" stroke="#ffffff" stroke-width="1.2"/>
+      <circle cx="-39" cy="7" r="6" fill="none" stroke="rgba(56, 189, 248, 0.45)" stroke-width="0.9"/>
+    </g>
+
+    <!-- ORBIT 2: VIIRS Fiery Amber Polar Trajectory (Inclined +35 deg) -->
+    <g transform="rotate(35)">
+      <ellipse rx="44" ry="16.5" fill="none" stroke="url(#sl-orbit-orange)" stroke-width="2.4" stroke-dasharray="115 16" filter="url(#sl-glow)"/>
+      <circle cx="39" cy="-7" r="3.2" fill="#f97316" stroke="#fef08a" stroke-width="1.2"/>
+      <circle cx="39" cy="-7" r="6" fill="none" stroke="rgba(249, 115, 22, 0.45)" stroke-width="0.9"/>
+    </g>
+
+    <!-- HARMONIZATION LINK NEXUS (Top Apex Intersection where Orbits Cross) -->
+    <g transform="translate(0, -27)" filter="url(#sl-flare)">
+      <circle r="10" fill="url(#sl-star-glow)"/>
+      <path d="M 0 -9 Q 0 0 9 0 Q 0 0 0 9 Q 0 0 -9 0 Q 0 0 0 -9 Z" fill="#ffffff"/>
+      <circle r="2" fill="#fef08a"/>
+    </g>
+
+    <!-- Secondary Cross-Sensor Node -->
+    <g transform="translate(0, 27)">
+      <circle r="2.2" fill="#38bdf8" stroke="#ffffff" stroke-width="0.8"/>
+    </g>
+  </g>
+
+  <!-- 2. TYPOGRAPHIC WORDMARK -->
+  <g transform="translate(132, 0)">
+    <!-- "SPECTRA" (Pure Space White) -->
+    <text x="0" y="66" class="txt-brand" fill="#ffffff">SPECTRA</text>
+
+    <!-- "LINK" (Cyan-to-Orange Radiant Gradient) -->
+    <text x="204" y="66" class="txt-brand" fill="url(#sl-link-grad)" filter="url(#sl-glow)">LINK</text>
+
+    <!-- Subtitle Mission Bar -->
+    <g transform="translate(2, 92)">
+      <rect x="0" y="-14" width="378" height="20" rx="5" 
+            fill="rgba(15, 23, 42, 0.75)" stroke="rgba(56, 189, 248, 0.22)" stroke-width="0.8"/>
+      <text x="12" y="0" class="txt-sub" fill="#cbd5e1">
+        <tspan fill="#38bdf8">●</tspan> MODIS <tspan fill="#64748b">|</tspan> <tspan fill="#f97316">●</tspan> VIIRS <tspan fill="#94a3b8">AI SENSOR HARMONIZATION</tspan>
+      </text>
+    </g>
+  </g>
+</svg>
