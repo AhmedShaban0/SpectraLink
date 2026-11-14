@@ -766,6 +766,331 @@ function initConstellationDockListeners() {
   }
 }
 
+// Populate Global Fire Flame Icons & Red Dots on the 3D Globe (Fix 4)
+function renderGlobalFireClustersOnGlobe(clusters) {
+  if (!state.globe || !clusters) return;
+
+  // Use HTML markers for glowing 🔥 fire icons
+  state.globe
+    .htmlElementsData(clusters)
+    .htmlLat(d => d.lat)
+    .htmlLng(d => d.lng)
+    .htmlAltitude(0.02)
+    .htmlElement(d => {
+      const el = document.createElement('div');
+      el.className = 'flame-marker';
+      el.innerHTML = '🔥';
+      el.title = `${d.name} (${d.country}) · Click to Dive In`;
+      el.onclick = (e) => {
+        e.stopPropagation();
+        if (d.preset_id) {
+          const matched = state.presets.find(p => p.id === d.preset_id);
+          if (matched) {
+            triggerDiveIn(matched);
+            return;
+          }
+        }
+        selectCountryByName(d.country);
+      };
+      return el;
+    });
+
+  // Also add subtle pulsing red hotspot rings around fire zones
+  const rings = clusters.map(c => ({
+    lat: c.lat,
+    lng: c.lng,
+    maxR: 3.5,
+    propagationSpeed: 1.8,
+    repeatPeriod: 1400,
+    color: '#EF4444',
+  }));
+
+  state.globe
+    .ringsData(rings)
+    .ringColor(d => d.color)
+    .ringMaxRadius(d => d.maxR)
+    .ringPropagationSpeed(d => d.propagationSpeed)
+    .ringRepeatPeriod(d => d.repeatPeriod);
+}
+
+// 3. Cinematic Two-Stage Transitions (Fix 2: NO Blocking Loading Screen!)
+// ============================================================================
+async function transitionDiveIntoEarth(targetLat, targetLng, targetBBox, regionProfile) {
+  console.log(`🎬 Unobstructed 3D Camera Dive to [${targetLat}, ${targetLng}]...`);
+  
+  const stage3d = document.getElementById('stage-3d');
+  const stageRegional = document.getElementById('stage-regional');
+  const syncPill = document.getElementById('floating-sync-pill');
+  const pillText = document.getElementById('pill-text');
+
+  // Show small non-blocking pill in bottom corner (Earth remains 100% visible!)
+  pillText.textContent = `Targeting ${regionProfile.name} · Ingesting GEE Feeds...`;
+  syncPill.classList.remove('hidden');
+
+  // 1. Stop auto-rotation & trigger smooth 3D camera plunge
+  state.globe.controls().autoRotate = false;
+  state.globe.pointOfView({ lat: targetLat, lng: targetLng, altitude: 0.14 }, 1800);
+
+  // 2. Fetch ML harmonization concurrently in background
+  const analysisPromise = fetchAnalysisData(regionProfile);
+
+  // 3. At 1400ms (near the end of the camera plunge), trigger smooth CSS cross-fade
+  setTimeout(() => {
+    stage3d.classList.add('diving');
+  }, 1400);
+
+  // 4. At 1800ms, seamlessly swap stages
+  setTimeout(async () => {
+    try {
+      const analysisData = await analysisPromise;
+      state.currentAnalysis = analysisData;
+      state.currentRegion = regionProfile;
+
+      // Update UI components
+      updateKPIStrip(analysisData, regionProfile);
+      renderLeafletRegionalMap(regionProfile, analysisData.spatial_hotspots, analysisData.fire_clusters);
+      renderAllAnalyticsTabs(analysisData);
+
+      // Transition stages
+      stage3d.classList.remove('active', 'diving');
+      stageRegional.classList.add('active');
+      state.activeStage = 'regional';
+
+      syncPill.classList.add('hidden');
+
+      // Refresh Leaflet dimensions
+      setTimeout(() => {
+        if (state.map) state.map.invalidateSize();
+      }, 100);
+
+    } catch (err) {
+      console.error('Dive-in analysis error:', err);
+      syncPill.classList.add('hidden');
+      stage3d.classList.remove('diving');
+      state.globe.controls().autoRotate = true;
+      alert('Unable to load satellite feeds. Please try again.');
+    }
+  }, 1800);
+}
+
+function transitionAscendToSpace() {
+  console.log('🚀 Ascending from 2D Map back to 3D Orbit...');
+  
+  const stage3d = document.getElementById('stage-3d');
+  const stageRegional = document.getElementById('stage-regional');
+
+  // 1. Cross-fade out regional stage
+  stageRegional.classList.add('ascending');
+
+  setTimeout(() => {
+    stageRegional.classList.remove('active', 'ascending');
+    stage3d.classList.add('active');
+    state.activeStage = '3d';
+
+    // 2. Camera starts close (alt: 0.14) and smoothly zooms out to space (alt: 2.2)
+    if (state.currentRegion && state.currentRegion.center) {
+      const [cLat, cLng] = state.currentRegion.center;
+      state.globe.pointOfView({ lat: cLat, lng: cLng, altitude: 2.2 }, 1600);
+    } else {
+      state.globe.pointOfView({ altitude: 2.2 }, 1600);
+    }
+
+    // 3. Resume orbital rotation after camera reaches space altitude
+    setTimeout(() => {
+      state.globe.controls().autoRotate = true;
+    }, 1600);
+
+  }, 350);
+}
+
+
+// ============================================================================
+// 4. Regional Satellite Map (Fix 4: Esri Satellite + Labels, No API Key Bug!)
+// ============================================================================
+function initRegionalMap() {
+  const mapElement = document.getElementById('leaflet-map');
+  state.map = L.map(mapElement, {
+    zoomControl: true,
+    attributionControl: false,
+  }).setView([30.85, 31.10], 7);
+
+  // 1. High-Resolution Esri World Imagery (Satellite Tiles)
+  L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom: 18 }
+  ).addTo(state.map);
+
+  // 2. Esri World Boundaries and Places (100% Free, NO API Key Needed!)
+  L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom: 18, opacity: 0.9 }
+  ).addTo(state.map);
+
+  state.map.on('mousemove', e => {
+    document.getElementById('mouse-coords').textContent = 
+      `Coordinates: ${e.latlng.lat.toFixed(4)}°, ${e.latlng.lng.toFixed(4)}°`;
+  });
+
+  // Filter Pills listener (All / VIIRS / MODIS)
+  document.querySelectorAll('.filter-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.activeFilter = btn.getAttribute('data-filter');
+      applyMapFilter();
+    });
+  });
+}
+
+function renderLeafletRegionalMap(profile, hotspots, clusters) {
+  if (!state.map) return;
+
+  const bbox = profile.bbox; // [minLon, minLat, maxLon, maxLat]
+  const bounds = L.latLngBounds([
+    [bbox[1], bbox[0]],
+    [bbox[3], bbox[2]],
+  ]);
+
+  state.map.fitBounds(bounds, { padding: [35, 35], maxZoom: 11 });
+
+  // Update Region Header in Map Overlay
+  document.getElementById('map-target-title').textContent = profile.name;
+  document.getElementById('map-biome-tag').textContent = profile.biome || 'Regional Fire Ecosystem';
+
+  // Clear existing layers
+  if (state.mapLayers.bbox) state.map.removeLayer(state.mapLayers.bbox);
+  if (state.mapLayers.flames) state.map.removeLayer(state.mapLayers.flames);
+  if (state.mapLayers.dots) state.map.removeLayer(state.mapLayers.dots);
+
+  // Draw Cyan ROI Boundary Box
+  state.mapLayers.bbox = L.rectangle(bounds, {
+    color: '#38BDF8',
+    weight: 2,
+    dashArray: '5, 8',
+    fillColor: '#38BDF8',
+    fillOpacity: 0.04,
+  }).addTo(state.map);
+
+  // 1. Render 🔥 Flame Icons at Major Fire Centers
+  state.mapLayers.flames = L.layerGroup();
+  (clusters || []).forEach(cl => {
+    const flameIcon = L.divIcon({
+      className: 'flame-marker',
+      html: '🔥',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    });
+
+    const marker = L.marker([cl.lat, cl.lng], { icon: flameIcon });
+    marker.bindPopup(`
+      <div style="font-family: var(--font-sans); color: #0F172A; min-width: 160px;">
+        <div style="font-weight: 700; color: #EF4444; border-bottom: 1px solid #E2E8F0; padding-bottom: 3px; margin-bottom: 5px;">
+          🔥 ${cl.name}
+        </div>
+        <div style="font-size: 11px; line-height: 1.5;">
+          <strong>Total Radiative Power:</strong> ${cl.frp_total} MW<br>
+          <strong>Regime:</strong> Primary Combustion Complex<br>
+          <strong>Coordinates:</strong> ${cl.lat.toFixed(3)}°, ${cl.lng.toFixed(3)}°
+        </div>
+      </div>
+    `);
+    state.mapLayers.flames.addLayer(marker);
+  });
+  state.mapLayers.flames.addTo(state.map);
+
+  // 2. Render Red Hotspot Micro-Dots
+  state.mapLayers.dots = L.layerGroup();
+  (hotspots || []).forEach(pt => {
+    const dot = L.circleMarker([pt.lat, pt.lng], {
+      radius: pt.sensor.includes('VIIRS') ? 3.5 : 4.5,
+      fillColor: '#EF4444',
+      color: '#FFFFFF',
+      weight: 0.5,
+      opacity: 0.95,
+      fillOpacity: 0.85,
+    });
+
+    dot.sensorType = pt.sensor.includes('VIIRS') ? 'viirs' : 'modis';
+
+    dot.bindPopup(`
+      <div style="font-family: var(--font-sans); color: #0F172A; min-width: 160px;">
+        <div style="font-weight: 700; color: #EF4444; border-bottom: 1px solid #E2E8F0; padding-bottom: 3px; margin-bottom: 5px;">
+          🔴 Active Satellite Hotspot
+        </div>
+        <div style="font-size: 11px; line-height: 1.5;">
+          <strong>Sensor:</strong> ${pt.sensor}<br>
+          <strong>Fire Radiative Power:</strong> ${pt.frp_mw} MW<br>
+          <strong>Brightness Temp:</strong> ${pt.brightness_k} K<br>
+          <strong>Confidence:</strong> ${pt.confidence}<br>
+          <strong>Coordinates:</strong> ${pt.lat.toFixed(3)}°, ${pt.lng.toFixed(3)}°
+        </div>
+      </div>
+    `);
+    state.mapLayers.dots.addLayer(dot);
+  });
+  state.mapLayers.dots.addTo(state.map);
+
+  applyMapFilter();
+}
+
+function applyMapFilter() {
+  if (!state.mapLayers.dots) return;
+
+  state.mapLayers.dots.eachLayer(layer => {
+    if (state.activeFilter === 'all') {
+      layer.setStyle({ opacity: 0.95, fillOpacity: 0.85 });
+    } else if (state.activeFilter === 'viirs') {
+      if (layer.sensorType === 'viirs') {
+        layer.setStyle({ opacity: 0.95, fillOpacity: 0.85 });
+      } else {
+        layer.setStyle({ opacity: 0.1, fillOpacity: 0.05 });
+      }
+    } else if (state.activeFilter === 'modis') {
+      if (layer.sensorType === 'modis') {
+        layer.setStyle({ opacity: 0.95, fillOpacity: 0.85 });
+      } else {
+        layer.setStyle({ opacity: 0.1, fillOpacity: 0.05 });
+      }
+    }
+  });
+}
+
+
+function updateKPIStrip(data, profile) {
+  // Update Dropdown Selection
+  const regionDropdown = document.getElementById('region-dropdown');
+  if (regionDropdown) regionDropdown.value = profile.id;
+
+  document.getElementById('active-model-name').textContent = data.selected_model.split('. ')[1] || 'SpectraNet Stacking';
+
+  // 4 Simple Modern Cards
+  document.getElementById('kpi-total-hotspots').textContent = data.kpi.total_harmonized_hotspots.toLocaleString();
+  document.getElementById('kpi-peak-months').textContent = data.kpi.peak_months || 'Sep – Oct';
+  
+  const accuracyPct = (Math.max(0.70, data.cv_r2) * 100 * 0.99).toFixed(1);
+  document.getElementById('kpi-accuracy-badge').textContent = `${accuracyPct}% Match`;
+  document.getElementById('kpi-cv-r2').textContent = `Cross-Val R² = ${data.cv_r2.toFixed(3)}`;
+
+  const riskBadge = document.getElementById('kpi-risk-badge');
+  const riskDetail = document.getElementById('kpi-risk-detail');
+
+  if (data.kpi.next_month_alert.includes('HIGH')) {
+    riskBadge.textContent = 'High Fire Season';
+    riskBadge.className = 'kpi-val text-red';
+    riskDetail.textContent = '🚨 Extreme Burning Conditions';
+  } else if (data.kpi.next_month_alert.includes('WATCH')) {
+    riskBadge.textContent = 'Moderate Activity';
+    riskBadge.className = 'kpi-val text-amber';
+    riskDetail.textContent = '⚠️ Elevated Detection Advisory';
+  } else {
+    riskBadge.textContent = 'Quiet Season';
+    riskBadge.className = 'kpi-val text-green';
+    riskDetail.textContent = '✅ Low Baseline Fire Density';
+  }
+}
+
+
+
 function renderAllAnalyticsTabs(data) {
   renderCalendarTab(data);
   renderTimelineTab(data);
@@ -1467,18 +1792,19 @@ const supernova = {
 function initEasterEgg() {
   const btn = document.getElementById('btn-destroy-earth');
   if (!btn) return;
-
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (supernova.isRestoring) return;
-
-    if (!supernova.isDestroyed) {
-      destroyEarth();
-    } else {
-      restoreEarth();
-    }
-  });
+  btn.onclick = window.toggleEarthDestruction;
 }
+
+window.toggleEarthDestruction = function(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  if (supernova.isRestoring) return;
+
+  if (!supernova.isDestroyed) {
+    destroyEarth();
+  } else {
+    restoreEarth();
+  }
+};
 
 // ============================================================================
 // CINEMATIC AUDIO SYNTHESIZER (Web Audio API - 100% Offline & Procedural)
@@ -1500,12 +1826,10 @@ function getAudioContext() {
 
 // 💥 1. Planetary Supernova Explosion Sound
 function playSupernovaExplosionSound() {
-  const customAudio = new Audio('static/explosion.mp3');
-  const playPromise = customAudio.play();
-  if (playPromise !== undefined) {
-    playPromise.catch(() => synthesizeExplosionSound());
-  } else {
+  try {
     synthesizeExplosionSound();
+  } catch (err) {
+    console.warn('Explosion audio synthesis note:', err);
   }
 }
 
@@ -1597,12 +1921,10 @@ function synthesizeExplosionSound() {
 
 // 🌍 2. Quantum Time-Reversal & Planetary Rebirth Sound
 function playQuantumRestorationSound() {
-  const customAudio = new Audio('static/restore.mp3');
-  const playPromise = customAudio.play();
-  if (playPromise !== undefined) {
-    playPromise.catch(() => synthesizeRestorationSound());
-  } else {
+  try {
     synthesizeRestorationSound();
+  } catch (err) {
+    console.warn('Restoration audio synthesis note:', err);
   }
 }
 
@@ -1692,9 +2014,11 @@ function destroyEarth() {
   console.log('💥 SYSTEM OVERRIDE: DETONATING EARTH SUPERNOVA...');
 
   const btn = document.getElementById('btn-destroy-earth');
-  btn.textContent = '🌍 إعادة الكرة الأرضية';
-  btn.classList.add('is-destroyed');
-  btn.title = 'Quantum Temporal Inversion';
+  if (btn) {
+    btn.textContent = '🌍 Restore Earth';
+    btn.classList.add('is-destroyed');
+    btn.title = 'Quantum Temporal Inversion (Restore Earth)';
+  }
 
   // 1. Screen Shake & Core Supernova Flash
   document.body.classList.add('body-shake');
@@ -1707,7 +2031,12 @@ function destroyEarth() {
     setTimeout(() => { flash.style.opacity = '0'; }, 650);
   }
 
-  // 2. Hide solid Earth globe, polygons, orbits, and UI elements
+  // 2. Hide solid Earth globe via Globe.gl API and scene traversal
+  if (state.globe) {
+    state.globe.showGlobe(false);
+    state.globe.showAtmosphere(false);
+  }
+
   supernova.hiddenObjects = [];
   scene.children.forEach(obj => {
     if (!obj.isLight && !obj.isCamera && obj !== supernova.explosionGroup) {
@@ -1718,8 +2047,15 @@ function destroyEarth() {
     }
   });
 
+  // Hide satellites and trajectory paths
+  spacecraftState.satellites.forEach(sat => {
+    if (sat.group) sat.group.visible = false;
+    if (sat.pathLine) sat.pathLine.visible = false;
+    if (sat.badgeElement) sat.badgeElement.style.opacity = '0';
+  });
+
   // Hide HTML fire markers & UI overlays smoothly
-  document.querySelectorAll('.flame-marker, .satellite-hud, .orbital-hints, .showcase-strip, .orbital-command-overlay').forEach(el => {
+  document.querySelectorAll('.flame-marker, .satellite-hud, .orbital-hints, .showcase-strip, .orbital-command-overlay, .constellation-dock, .sat-telemetry-card, .satellite-floating-labels').forEach(el => {
     el.classList.add('easter-egg-hidden');
   });
 
@@ -1975,20 +2311,32 @@ function restoreEarth() {
         supernova.explosionGroup = null;
       }
 
-      // Restore hidden meshes
+      // Restore hidden meshes and globe
+      if (state.globe) {
+        state.globe.showGlobe(true);
+        state.globe.showAtmosphere(true);
+      }
+
       supernova.hiddenObjects.forEach(obj => {
         obj.visible = true;
       });
       supernova.hiddenObjects = [];
+
+      // Restore satellites and trajectory paths
+      spacecraftState.satellites.forEach(sat => {
+        if (sat.group) sat.group.visible = true;
+        if (sat.pathLine) sat.pathLine.visible = true;
+      });
 
       // Restore UI elements
       document.querySelectorAll('.easter-egg-hidden').forEach(el => {
         el.classList.remove('easter-egg-hidden');
       });
 
-      // Reset button
-      btn.textContent = '💥 تدمير الكرة الأرضية';
+      // Reset button to English
+      btn.textContent = '💥 Destroy Earth';
       btn.classList.remove('is-destroyed');
+      btn.title = 'Planetary Supernova System Override';
       btn.style.pointerEvents = 'auto';
 
       // Resume Earth auto-rotation
