@@ -78,6 +78,20 @@ function initGlobe() {
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
 
+  // Disengage active spacecraft tracking when user drags/rotates globe manually
+  controls.addEventListener('start', () => {
+    if (spacecraftState.activelyTrackedId) {
+      spacecraftState.activelyTrackedId = null;
+      spacecraftState.isInitialGlide = false;
+      document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
+      const lockStatusEl = document.getElementById('telemetry-lock-status');
+      if (lockStatusEl) {
+        lockStatusEl.textContent = 'FREE CAM (Manual)';
+        lockStatusEl.className = 'telemetry-val text-gray';
+      }
+    }
+  });
+
   // Tune Three.js scene lighting to eliminate harsh white glare over Africa/Sahara
   setTimeout(() => {
     const scene = state.globe.scene();
@@ -199,7 +213,11 @@ const spacecraftState = {
   solarArrayTexture: null,
   frameCount: 0,
   isInitialized: false,
+  activelyTrackedId: null,
+  isInitialGlide: false,
+  targetAltitude: 0.85,
 };
+window.spacecraftState = spacecraftState;
 
 // Procedural Canvas Textures for Authentic Space Materials (Zero external .glb dependencies!)
 function generateProceduralSpaceTextures() {
@@ -583,6 +601,22 @@ Click to track spacecraft`;
   }
 }
 
+// Accurate Geographic Coordinate Converter (Matches Globe.gl internal spherical coordinate system)
+function vectorToGeoCoords(pos) {
+  if (state.globe && typeof state.globe.toGeoCoords === 'function') {
+    return state.globe.toGeoCoords(pos);
+  }
+  const x = pos.x, y = pos.y, z = pos.z;
+  const i = Math.sqrt(x * x + y * y + z * z);
+  const a = Math.acos(Math.max(-1, Math.min(1, y / (i || 1))));
+  const o = Math.atan2(z, x);
+  return {
+    lat: 90 - (180 * a) / Math.PI,
+    lng: 90 - (180 * o) / Math.PI - (o < -Math.PI / 2 ? 360 : 0),
+    altitude: i / 100 - 1,
+  };
+}
+
 // Continuous Real-Time Animation Loop for Spacecraft & HUD Tracking
 function animateOrbitalConstellation() {
   spacecraftState.frameCount++;
@@ -621,9 +655,11 @@ function animateOrbitalConstellation() {
       sat.groundRing.material.opacity = 0.50 + Math.sin(t * 0.08) * 0.25;
     }
 
-    // Convert coordinates to lat/lng for tracking
-    sat.currentLat = Math.asin(y / r) * (180 / Math.PI);
-    sat.currentLng = Math.atan2(-z, x) * (180 / Math.PI);
+    // Accurate Globe.gl spherical coordinates mapping (mathematically exact lat/lng)
+    const geo = vectorToGeoCoords(sat.group.position);
+    sat.currentLat = geo.lat;
+    sat.currentLng = geo.lng;
+    sat.currentAltitude = geo.altitude;
 
     // Floating HUD Glass Badge Tracking
     const badge = sat.badgeElement;
@@ -660,7 +696,7 @@ function animateOrbitalConstellation() {
       }
     }
     // Real-time live coordinates update if tracked in Telemetry HUD
-    if (spacecraftState.activelyTrackedId === sat.config.id && t % 12 === 0) {
+    if (spacecraftState.activelyTrackedId === sat.config.id && t % 6 === 0) {
       const posEl = document.getElementById('telemetry-pos');
       if (posEl) {
         const latStr = sat.currentLat >= 0 ? `${sat.currentLat.toFixed(1)}° N` : `${Math.abs(sat.currentLat).toFixed(1)}° S`;
@@ -669,6 +705,20 @@ function animateOrbitalConstellation() {
       }
     }
   });
+
+  // Continuous Real-Time Camera Tracking: Lock camera onto actively tracked spacecraft
+  if (spacecraftState.activelyTrackedId && !spacecraftState.isInitialGlide && is3DActive && !isDestroyed && state.globe) {
+    const trackedSat = spacecraftState.satellites.find(s => s.config.id === spacecraftState.activelyTrackedId);
+    if (trackedSat) {
+      const curPov = state.globe.pointOfView ? state.globe.pointOfView() : null;
+      const curAlt = curPov && curPov.altitude ? curPov.altitude : (spacecraftState.targetAltitude || 0.85);
+      state.globe.pointOfView({
+        lat: trackedSat.currentLat,
+        lng: trackedSat.currentLng,
+        altitude: curAlt,
+      }, 0);
+    }
+  }
 
   spacecraftState.animFrameId = requestAnimationFrame(animateOrbitalConstellation);
 }
@@ -679,6 +729,14 @@ function trackSpacecraft(satId) {
   if (!sat || !state.globe) return;
 
   spacecraftState.activelyTrackedId = satId;
+  spacecraftState.isInitialGlide = true;
+  spacecraftState.targetAltitude = 0.85;
+
+  // Stop globe auto-rotation so view does not drift away
+  const controls = state.globe.controls();
+  if (controls) {
+    controls.autoRotate = false;
+  }
 
   // Update dock buttons active state
   document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
@@ -694,6 +752,7 @@ function trackSpacecraft(satId) {
   const resEl = document.getElementById('telemetry-res');
   const swathEl = document.getElementById('telemetry-swath');
   const posEl = document.getElementById('telemetry-pos');
+  const lockStatusEl = document.getElementById('telemetry-lock-status');
 
   if (nameEl) nameEl.textContent = sat.config.name;
   if (codeEl) codeEl.textContent = `${sat.config.codeName} · NASA / NOAA`;
@@ -711,23 +770,41 @@ function trackSpacecraft(satId) {
     const lngStr = sat.currentLng >= 0 ? `${sat.currentLng.toFixed(1)}° E` : `${Math.abs(sat.currentLng).toFixed(1)}° W`;
     posEl.textContent = `${latStr}, ${lngStr}`;
   }
+  if (lockStatusEl) {
+    lockStatusEl.textContent = 'ACTIVE (Live Orbit Lock)';
+    lockStatusEl.className = `telemetry-val highlight ${sat.config.id === 'viirs' ? 'text-orange' : 'text-cyan'}`;
+  }
   if (card) card.classList.remove('hidden');
 
   console.log(`🎯 Tracking Spacecraft: ${sat.config.name} at [${sat.currentLat.toFixed(2)}°, ${sat.currentLng.toFixed(2)}°]...`);
+  // Smooth initial fly-in transition
   state.globe.pointOfView({
     lat: sat.currentLat,
     lng: sat.currentLng,
     altitude: 0.85,
-  }, 1200);
+  }, 1000);
+
+  // After 1000ms initial fly-in transition finishes, enable 60fps continuous lock
+  setTimeout(() => {
+    if (spacecraftState.activelyTrackedId === satId) {
+      spacecraftState.isInitialGlide = false;
+    }
+  }, 1020);
 }
 
 // Reset camera to global overview
 function resetToGlobalEarthView() {
   if (!state.globe) return;
   spacecraftState.activelyTrackedId = null;
+  spacecraftState.isInitialGlide = false;
   document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
   const card = document.getElementById('sat-telemetry-card');
   if (card) card.classList.add('hidden');
+
+  const controls = state.globe.controls();
+  if (controls) {
+    controls.autoRotate = true;
+  }
 
   state.globe.pointOfView({
     lat: 20,
@@ -761,10 +838,17 @@ function initConstellationDockListeners() {
       const card = document.getElementById('sat-telemetry-card');
       if (card) card.classList.add('hidden');
       spacecraftState.activelyTrackedId = null;
+      spacecraftState.isInitialGlide = false;
       document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
+      const controls = state.globe.controls();
+      if (controls) {
+        controls.autoRotate = true;
+      }
     };
   }
 }
+window.trackSpacecraft = trackSpacecraft;
+window.resetToGlobalEarthView = resetToGlobalEarthView;
 
 // Populate Global Fire Flame Icons & Red Dots on the 3D Globe (Fix 4)
 function renderGlobalFireClustersOnGlobe(clusters) {
@@ -827,7 +911,13 @@ async function transitionDiveIntoEarth(targetLat, targetLng, targetBBox, regionP
   pillText.textContent = `Targeting ${regionProfile.name} · Ingesting GEE Feeds...`;
   syncPill.classList.remove('hidden');
 
-  // 1. Stop auto-rotation & trigger smooth 3D camera plunge
+  // 1. Stop auto-rotation & active satellite tracking, trigger smooth 3D camera plunge
+  spacecraftState.activelyTrackedId = null;
+  spacecraftState.isInitialGlide = false;
+  document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
+  const satCard = document.getElementById('sat-telemetry-card');
+  if (satCard) satCard.classList.add('hidden');
+
   state.globe.controls().autoRotate = false;
   state.globe.pointOfView({ lat: targetLat, lng: targetLng, altitude: 0.14 }, 1800);
 
@@ -2059,6 +2149,11 @@ function destroyEarth() {
     btn.classList.add('is-destroyed');
     btn.title = 'Quantum Temporal Inversion (Restore Earth)';
   }
+
+  // Disengage any active spacecraft tracking
+  spacecraftState.activelyTrackedId = null;
+  spacecraftState.isInitialGlide = false;
+  document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
 
   // 1. Screen Shake & Core Supernova Flash
   document.body.classList.add('body-shake');

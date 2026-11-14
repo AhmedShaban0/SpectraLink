@@ -636,6 +636,8 @@ kbd {
 
 .text-cyan { color: var(--cyan-primary) !important; }
 .text-amber { color: var(--amber-primary) !important; }
+.text-orange { color: #f97316 !important; }
+.text-gray { color: #94a3b8 !important; }
 .text-red { color: var(--red-alert) !important; }
 .text-green { color: var(--green-emerald) !important; }
 
