@@ -468,7 +468,7 @@ kbd {
   padding: 10px 24px;
   background: rgba(11, 18, 38, 0.96);
   border-bottom: 1px solid var(--border-glow-cyan);
-  z-index: 30;
+  z-index: 60;
 }
 
 .nav-left {
@@ -1129,7 +1129,7 @@ kbd {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 30;
+  z-index: 60;
   overflow: hidden;
 }
 
@@ -1209,4 +1209,204 @@ kbd {
   font-weight: 500;
   color: #94A3B8;
   margin-left: 4px;
+}
+
+/* ==========================================================================
+   NASA CONSTELLATION DOCK & LIVE SATELLITE TELEMETRY HUD
+   ========================================================================== */
+.constellation-dock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(11, 18, 38, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 9999px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.15);
+  z-index: 50;
+}
+
+.dock-label {
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #94A3B8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+.dock-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #F8FAFC;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dock-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+.dock-btn.terra:hover, .dock-btn.terra.active {
+  border-color: #EF4444;
+  background: rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.5);
+  color: #FFFFFF;
+}
+
+.dock-btn.aqua:hover, .dock-btn.aqua.active {
+  border-color: #38BDF8;
+  background: rgba(56, 189, 248, 0.2);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+  color: #FFFFFF;
+}
+
+.dock-btn.viirs:hover, .dock-btn.viirs.active {
+  border-color: #F97316;
+  background: rgba(249, 115, 22, 0.2);
+  box-shadow: 0 0 14px rgba(249, 115, 22, 0.5);
+  color: #FFFFFF;
+}
+
+.dock-btn.reset:hover {
+  border-color: #10B981;
+  background: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+}
+
+.dock-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  animation: pulse 1.2s infinite alternate;
+}
+.dock-dot.terra { background-color: #EF4444; box-shadow: 0 0 8px #EF4444; }
+.dock-dot.aqua { background-color: #38BDF8; box-shadow: 0 0 8px #38BDF8; }
+.dock-dot.viirs { background-color: #F97316; box-shadow: 0 0 8px #F97316; }
+
+.sat-item.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+}
+.sat-item.clickable:hover {
+  background: rgba(56, 189, 248, 0.12);
+  transform: translateX(4px);
+}
+
+/* Floating Spacecraft Telemetry Card */
+.sat-telemetry-card {
+  position: absolute;
+  top: 86px;
+  right: 28px;
+  width: 300px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: rgba(9, 14, 28, 0.94);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.2);
+  z-index: 55;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sat-telemetry-card.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px) scale(0.96);
+}
+
+.sat-telemetry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 10px;
+}
+
+.sat-telemetry-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sat-telemetry-heading {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #FFFFFF;
+  letter-spacing: 0.02em;
+}
+
+.sat-telemetry-sub {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: #94A3B8;
+}
+
+.sat-telemetry-close {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 1.3rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+  transition: color 0.15s ease;
+}
+.sat-telemetry-close:hover {
+  color: #FFFFFF;
+}
+
+.sat-telemetry-body {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+}
+
+.telemetry-lbl {
+  color: #94A3B8;
+}
+
+.telemetry-val {
+  font-weight: 600;
+  color: #E2E8F0;
+}
+
+.telemetry-val.highlight {
+  color: #38BDF8;
+}
+
+.telemetry-val.badge-harmonized {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34D399;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }

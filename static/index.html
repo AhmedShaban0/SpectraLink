@@ -41,6 +41,23 @@
           <div class="engine-tag"><span>●</span> GEE PROJECT: IDYLLIC-ANVIL-514517-B3</div>
         </div>
       </div>
+
+      <!-- NASA 3D Satellite Tracking Quick-Dock -->
+      <div class="constellation-dock glassmorphic">
+        <span class="dock-label">🛰️ 3D Satellites:</span>
+        <button id="dock-btn-terra" class="dock-btn terra" title="Track MODIS Terra in 3D orbit">
+          <span class="dock-dot terra"></span> Terra (1km)
+        </button>
+        <button id="dock-btn-aqua" class="dock-btn aqua" title="Track MODIS Aqua in 3D orbit">
+          <span class="dock-dot aqua"></span> Aqua (1km)
+        </button>
+        <button id="dock-btn-viirs" class="dock-btn viirs" title="Track VIIRS Suomi-NPP in 3D orbit">
+          <span class="dock-dot viirs"></span> VIIRS (375m)
+        </button>
+        <button id="dock-btn-reset" class="dock-btn reset" title="Reset Global Earth View">
+          🌍 Reset
+        </button>
+      </div>
     </header>
 
     <!-- Floating Orbital Command & Global Search Overlay -->
@@ -91,21 +108,57 @@
 
     <!-- Active Satellite Orbit HUD -->
     <div class="satellite-hud glassmorphic">
-      <div class="hud-header">ORBITING CONSTELLATIONS</div>
-      <div class="sat-item">
+      <div class="hud-header">ORBITING CONSTELLATIONS (CLICK TO TRACK)</div>
+      <div id="hud-sat-terra" class="sat-item clickable" title="Click to track MODIS Terra">
         <span class="sat-dot terra"></span>
         <span class="sat-name">MODIS Terra</span>
         <span class="sat-meta">705 km · 10:30 AM Descending</span>
       </div>
-      <div class="sat-item">
+      <div id="hud-sat-aqua" class="sat-item clickable" title="Click to track MODIS Aqua">
         <span class="sat-dot aqua"></span>
         <span class="sat-name">MODIS Aqua</span>
         <span class="sat-meta">705 km · 1:30 PM Ascending</span>
       </div>
-      <div class="sat-item">
+      <div id="hud-sat-viirs" class="sat-item clickable" title="Click to track VIIRS Suomi-NPP">
         <span class="sat-dot viirs"></span>
         <span class="sat-name">VIIRS Suomi-NPP</span>
         <span class="sat-meta">824 km · 375m I-Band HR</span>
+      </div>
+    </div>
+
+    <!-- Active Spacecraft HUD Telemetry Card -->
+    <div id="sat-telemetry-card" class="sat-telemetry-card glassmorphic hidden">
+      <div class="sat-telemetry-header">
+        <div class="sat-telemetry-title">
+          <span id="sat-telemetry-dot" class="sat-badge-dot terra"></span>
+          <div>
+            <span id="sat-telemetry-name" class="sat-telemetry-heading">MODIS Terra</span>
+            <span id="sat-telemetry-code" class="sat-telemetry-sub">EOS AM-1 · NASA GSFC</span>
+          </div>
+        </div>
+        <button id="btn-close-sat-telemetry" class="sat-telemetry-close" title="Close telemetry">&times;</button>
+      </div>
+      <div class="sat-telemetry-body">
+        <div class="telemetry-row">
+          <span class="telemetry-lbl">Orbit Altitude:</span>
+          <span id="telemetry-alt" class="telemetry-val">705 km Polar LEO</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-lbl">Spatial Resolution:</span>
+          <span id="telemetry-res" class="telemetry-val highlight">1,000 m (MODIS)</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-lbl">Swath Width:</span>
+          <span id="telemetry-swath" class="telemetry-val">2,330 km</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-lbl">Live Sub-Satellite:</span>
+          <span id="telemetry-pos" class="telemetry-val font-mono">15.4° N, 32.1° E</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-lbl">Cross-Sensor Link:</span>
+          <span class="telemetry-val badge-harmonized">Harmonized</span>
+        </div>
       </div>
     </div>
 
