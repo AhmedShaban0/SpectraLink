@@ -95,7 +95,7 @@ function initGlobe() {
   }, 200);
 
   // Generate 3D Satellite Orbits
-  generateSatelliteConstellation();
+  init3DSpacecraftConstellation();
 
   // Load World Country Polygons with TRANSPARENT fill (Fix 3)
   fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
@@ -124,38 +124,567 @@ function initGlobe() {
     .catch(err => console.warn('Country polygon fallback:', err));
 }
 
-function generateSatelliteConstellation() {
-  function createOrbitPath(inclinationDeg, altitude) {
-    const points = [];
-    const rad = inclinationDeg * (Math.PI / 180);
-    for (let i = 0; i <= 360; i += 4) {
-      const theta = i * (Math.PI / 180);
-      const lat = Math.sin(theta) * Math.sin(rad) * (180 / Math.PI);
-      const lng = (theta * (180 / Math.PI)) - 180;
-      points.push({ lat, lng, alt: altitude });
-    }
-    return points;
+// ============================================================================
+// REALISTIC 3D NASA SPACECRAFT CONSTELLATION & VOLUMETRIC SCANNING SWATHS
+// (MODIS Terra, MODIS Aqua, and VIIRS Suomi-NPP)
+// ============================================================================
+
+const SATELLITE_CONFIGS = [
+  {
+    id: 'terra',
+    name: 'MODIS Terra',
+    codeName: 'EOS AM-1',
+    orbitTimeDesc: '10:30 AM Descending',
+    resolution: '1,000m (MODIS)',
+    inclinationDeg: 98.2,
+    raanDeg: 0,
+    altitude: 124.0,     // 1.24x Earth radius (R_earth = 100)
+    speed: 0.0034,       // orbital radians per frame
+    phase0: 0.0,         // initial anomaly
+    swathRadius: 11.2,   // wide 2,330 km swath
+    swathColor: 0x38BDF8,// Vibrant Cyan
+    badgeClass: 'terra',
+    dotClass: 'terra',
+    badgeLabel: 'MODIS Terra',
+    badgeSub: '10:30 AM · 1km',
+  },
+  {
+    id: 'aqua',
+    name: 'MODIS Aqua',
+    codeName: 'EOS PM-1',
+    orbitTimeDesc: '1:30 PM Ascending',
+    resolution: '1,000m (MODIS)',
+    inclinationDeg: 98.2,
+    raanDeg: 82,
+    altitude: 126.8,     // 1.268x Earth radius
+    speed: 0.0032,
+    phase0: 2.356,       // 135 deg
+    swathRadius: 11.2,
+    swathColor: 0x38BDF8,// Vibrant Cyan
+    badgeClass: 'aqua',
+    dotClass: 'aqua',
+    badgeLabel: 'MODIS Aqua',
+    badgeSub: '1:30 PM · 1km',
+  },
+  {
+    id: 'viirs',
+    name: 'VIIRS Suomi-NPP',
+    codeName: 'Suomi-NPP / JPSS',
+    orbitTimeDesc: '1:30 PM Ascending (HR)',
+    resolution: '375m I-Band HR',
+    inclinationDeg: 98.7,
+    raanDeg: 168,
+    altitude: 130.5,     // 1.305x Earth radius
+    speed: 0.0030,
+    phase0: 4.363,       // 250 deg
+    swathRadius: 7.8,    // sharper 375m high-res swath
+    swathColor: 0xF97316,// Fiery Orange
+    badgeClass: 'viirs',
+    dotClass: 'viirs',
+    badgeLabel: 'VIIRS Suomi-NPP',
+    badgeSub: '375m High-Res',
+  },
+];
+
+const spacecraftState = {
+  satellites: [],
+  animFrameId: null,
+  goldFoilTexture: null,
+  goldFoilBumpTexture: null,
+  solarArrayTexture: null,
+  frameCount: 0,
+};
+
+// Procedural Canvas Textures for Authentic Space Materials (Zero external .glb issues!)
+function generateProceduralSpaceTextures() {
+  if (spacecraftState.goldFoilTexture) return;
+
+  // 1. Crinkled Gold Kapton Multi-Layer Insulation (MLI) Foil Texture (256x256)
+  const foilCanvas = document.createElement('canvas');
+  foilCanvas.width = 256;
+  foilCanvas.height = 256;
+  const fCtx = foilCanvas.getContext('2d');
+
+  fCtx.fillStyle = '#d97706';
+  fCtx.fillRect(0, 0, 256, 256);
+
+  const patchColors = ['#f59e0b', '#fbbf24', '#b45309', '#d97706', '#fef08a', '#92400e'];
+  for (let i = 0; i < 300; i++) {
+    fCtx.fillStyle = patchColors[Math.floor(Math.random() * patchColors.length)];
+    fCtx.beginPath();
+    const px = Math.random() * 256;
+    const py = Math.random() * 256;
+    const size = Math.random() * 16 + 6;
+    fCtx.moveTo(px, py);
+    fCtx.lineTo(px + (Math.random() - 0.5) * size, py + Math.random() * size);
+    fCtx.lineTo(px + Math.random() * size, py + (Math.random() - 0.5) * size);
+    fCtx.closePath();
+    fCtx.globalAlpha = 0.45;
+    fCtx.fill();
   }
 
-  const orbits = [
-    { name: 'MODIS Terra', color: '#EF4444', path: createOrbitPath(98.2, 0.12) },
-    { name: 'MODIS Aqua', color: '#38BDF8', path: createOrbitPath(98.2, 0.13) },
-    { name: 'VIIRS Suomi-NPP', color: '#F59E0B', path: createOrbitPath(98.7, 0.15) },
-  ];
+  // Thermal blanket quilt seams / grid lines
+  fCtx.globalAlpha = 0.65;
+  fCtx.strokeStyle = 'rgba(146, 64, 14, 0.7)';
+  fCtx.lineWidth = 1.5;
+  for (let x = 0; x <= 256; x += 32) {
+    fCtx.beginPath();
+    fCtx.moveTo(x, 0); fCtx.lineTo(x, 256);
+    fCtx.stroke();
+  }
+  for (let y = 0; y <= 256; y += 32) {
+    fCtx.beginPath();
+    fCtx.moveTo(0, y); fCtx.lineTo(256, y);
+    fCtx.stroke();
+  }
 
-  state.globe
-    .pathsData(orbits)
-    .pathPoints(d => d.path)
-    .pathPointLat(p => p.lat)
-    .pathPointLng(p => p.lng)
-    .pathPointAlt(p => p.alt)
-    .pathColor(d => d.color)
-    .pathDashLength(0.08)
-    .pathDashGap(0.04)
-    .pathDashAnimateTime(12000);
+  spacecraftState.goldFoilTexture = new THREE.CanvasTexture(foilCanvas);
+  spacecraftState.goldFoilTexture.wrapS = THREE.RepeatWrapping;
+  spacecraftState.goldFoilTexture.wrapT = THREE.RepeatWrapping;
+
+  // Bump map for crinkle relief
+  const bumpCanvas = document.createElement('canvas');
+  bumpCanvas.width = 256;
+  bumpCanvas.height = 256;
+  const bCtx = bumpCanvas.getContext('2d');
+  bCtx.fillStyle = '#808080';
+  bCtx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 350; i++) {
+    const v = Math.floor(Math.random() * 255);
+    bCtx.fillStyle = `rgb(${v},${v},${v})`;
+    bCtx.beginPath();
+    bCtx.arc(Math.random() * 256, Math.random() * 256, Math.random() * 4 + 1, 0, Math.PI * 2);
+    bCtx.globalAlpha = 0.28;
+    bCtx.fill();
+  }
+  spacecraftState.goldFoilBumpTexture = new THREE.CanvasTexture(bumpCanvas);
+
+  // 2. High-Efficiency Silicon Photovoltaic Solar Array Texture (512x256)
+  const solarCanvas = document.createElement('canvas');
+  solarCanvas.width = 512;
+  solarCanvas.height = 256;
+  const sCtx = solarCanvas.getContext('2d');
+
+  sCtx.fillStyle = '#060d1f';
+  sCtx.fillRect(0, 0, 512, 256);
+
+  const cols = 8;
+  const rows = 4;
+  const padX = 6;
+  const padY = 6;
+  const cellW = (512 - padX * (cols + 1)) / cols;
+  const cellH = (256 - padY * (rows + 1)) / rows;
+
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      const cx = padX + c * (cellW + padX);
+      const cy = padY + r * (cellH + padY);
+
+      const grad = sCtx.createLinearGradient(cx, cy, cx + cellW, cy + cellH);
+      grad.addColorStop(0, '#1e3a8a');
+      grad.addColorStop(0.5, '#172554');
+      grad.addColorStop(1, '#0f172a');
+      sCtx.fillStyle = grad;
+      sCtx.fillRect(cx, cy, cellW, cellH);
+
+      // Silver electrical busbars
+      sCtx.strokeStyle = 'rgba(186, 230, 253, 0.85)';
+      sCtx.lineWidth = 1.0;
+      sCtx.beginPath();
+      sCtx.moveTo(cx + cellW * 0.33, cy); sCtx.lineTo(cx + cellW * 0.33, cy + cellH);
+      sCtx.moveTo(cx + cellW * 0.66, cy); sCtx.lineTo(cx + cellW * 0.66, cy + cellH);
+      sCtx.stroke();
+
+      // Horizontal micro-fingers
+      sCtx.strokeStyle = 'rgba(147, 197, 253, 0.3)';
+      sCtx.lineWidth = 0.5;
+      for (let f = cy + 4; f < cy + cellH; f += 5) {
+        sCtx.beginPath();
+        sCtx.moveTo(cx, f); sCtx.lineTo(cx + cellW, f);
+        sCtx.stroke();
+      }
+    }
+  }
+
+  sCtx.strokeStyle = '#f59e0b';
+  sCtx.lineWidth = 3;
+  sCtx.strokeRect(2, 2, 508, 252);
+
+  spacecraftState.solarArrayTexture = new THREE.CanvasTexture(solarCanvas);
 }
 
-// Populate Global Fire Flame Icons & Red Dots on the 3D Globe (Fix 4)
+// Builds a realistic 3D spacecraft model using authentic NASA EOS & Suomi-NPP specs
+function createRealisticSatelliteModel(config) {
+  generateProceduralSpaceTextures();
+
+  const satGroup = new THREE.Group();
+  satGroup.name = config.name;
+
+  // Shared Materials
+  const goldFoilMat = new THREE.MeshStandardMaterial({
+    map: spacecraftState.goldFoilTexture,
+    bumpMap: spacecraftState.goldFoilBumpTexture,
+    bumpScale: 0.06,
+    color: 0xffcc33,
+    metalness: 0.86,
+    roughness: 0.25,
+  });
+
+  const whiteRadiatorMat = new THREE.MeshStandardMaterial({
+    color: 0xf8fafc,
+    metalness: 0.15,
+    roughness: 0.2,
+  });
+
+  const darkCompositeMat = new THREE.MeshStandardMaterial({
+    color: 0x111827,
+    metalness: 0.4,
+    roughness: 0.6,
+  });
+
+  const silverMetalMat = new THREE.MeshStandardMaterial({
+    color: 0xe2e8f0,
+    metalness: 0.92,
+    roughness: 0.18,
+  });
+
+  const solarPanelMat = new THREE.MeshStandardMaterial({
+    map: spacecraftState.solarArrayTexture,
+    metalness: 0.65,
+    roughness: 0.22,
+  });
+
+  // 1. Spacecraft Bus (Main Body)
+  // Rectangular avionics chassis wrapped in gold Kapton foil
+  const busGeo = new THREE.BoxGeometry(2.4, 3.8, 2.4);
+  const busMesh = new THREE.Mesh(busGeo, goldFoilMat);
+  satGroup.add(busMesh);
+
+  // White radiator heat-shield panel on cold side (+X)
+  const radGeo = new THREE.BoxGeometry(0.12, 3.2, 2.2);
+  const radMesh = new THREE.Mesh(radGeo, whiteRadiatorMat);
+  radMesh.position.set(1.24, 0, 0);
+  satGroup.add(radMesh);
+
+  // Structural equipment bay frame on zenith (+Y)
+  const zenithFrameGeo = new THREE.BoxGeometry(2.6, 0.35, 2.6);
+  const zenithFrameMesh = new THREE.Mesh(zenithFrameGeo, darkCompositeMat);
+  zenithFrameMesh.position.set(0, 1.95, 0);
+  satGroup.add(zenithFrameMesh);
+
+  // 2. Asymmetric Single-Wing Solar Array (Signature NASA EOS Design)
+  const solarYokeGroup = new THREE.Group();
+  solarYokeGroup.position.set(-1.2, 0.3, 0);
+
+  // Articulated yoke boom
+  const boomGeo = new THREE.CylinderGeometry(0.14, 0.14, 1.8, 12);
+  const boomMesh = new THREE.Mesh(boomGeo, silverMetalMat);
+  boomMesh.rotation.z = Math.PI / 2;
+  boomMesh.position.set(-0.9, 0, 0);
+  solarYokeGroup.add(boomMesh);
+
+  // Large rectangular solar panel wing
+  const panelGeo = new THREE.BoxGeometry(7.4, 3.2, 0.14);
+  const panelMaterials = [
+    darkCompositeMat,
+    darkCompositeMat,
+    darkCompositeMat,
+    darkCompositeMat,
+    solarPanelMat,    // +Z front face (photovoltaic cells)
+    darkCompositeMat, // -Z back face (carbon composite)
+  ];
+  const solarPanelMesh = new THREE.Mesh(panelGeo, panelMaterials);
+  solarPanelMesh.position.set(-5.5, 0, 0);
+  solarYokeGroup.add(solarPanelMesh);
+
+  satGroup.add(solarYokeGroup);
+
+  // 3. Parabolic High-Gain Dish Antenna
+  const dishGroup = new THREE.Group();
+  dishGroup.position.set(0.6, 2.1, -0.4);
+
+  const mastGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.4, 8);
+  const mastMesh = new THREE.Mesh(mastGeo, silverMetalMat);
+  mastMesh.position.set(0, 0.7, 0);
+  dishGroup.add(mastMesh);
+
+  const dishGeo = new THREE.SphereGeometry(1.2, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.44);
+  const dishMesh = new THREE.Mesh(dishGeo, silverMetalMat);
+  dishMesh.position.set(0, 1.4, 0);
+  dishMesh.rotation.x = Math.PI * 0.85;
+  dishGroup.add(dishMesh);
+
+  const feedGeo = new THREE.ConeGeometry(0.2, 0.5, 8);
+  const feedMesh = new THREE.Mesh(feedGeo, goldFoilMat);
+  feedMesh.position.set(0, 1.15, -0.4);
+  feedMesh.rotation.x = Math.PI * 0.85;
+  dishGroup.add(feedMesh);
+
+  satGroup.add(dishGroup);
+
+  // 4. Nadir Fire Scanning Instrument Deck (Facing Earth in -Y)
+  const nadirGroup = new THREE.Group();
+  nadirGroup.position.set(0, -1.9, 0);
+
+  const instBoxGeo = new THREE.BoxGeometry(2.0, 0.9, 2.0);
+  const instBoxMesh = new THREE.Mesh(instBoxGeo, silverMetalMat);
+  nadirGroup.add(instBoxMesh);
+
+  // Germanium optical scan mirror window (points down at Earth)
+  const lensGeo = new THREE.CylinderGeometry(0.48, 0.48, 0.15, 16);
+  const lensMat = new THREE.MeshStandardMaterial({
+    color: config.swathColor,
+    emissive: config.swathColor,
+    emissiveIntensity: 0.7,
+    roughness: 0.1,
+    metalness: 0.9,
+  });
+  const lensMesh = new THREE.Mesh(lensGeo, lensMat);
+  lensMesh.position.set(0, -0.48, 0);
+  nadirGroup.add(lensMesh);
+
+  // Cryocooler radiator door
+  const cryoDoorGeo = new THREE.BoxGeometry(1.2, 0.08, 0.8);
+  const cryoDoorMesh = new THREE.Mesh(cryoDoorGeo, whiteRadiatorMat);
+  cryoDoorMesh.position.set(0.6, -0.3, 0.7);
+  cryoDoorMesh.rotation.x = 0.35;
+  nadirGroup.add(cryoDoorMesh);
+
+  satGroup.add(nadirGroup);
+
+  // 5. Volumetric Nadir Scanning Swath Cone
+  const coneHeight = config.altitude - 100.0; // Distance to Earth surface (R_earth = 100)
+  const swathRadius = config.swathRadius;
+
+  const coneGeo = new THREE.ConeGeometry(swathRadius, coneHeight, 32, 1, true);
+  coneGeo.translate(0, -coneHeight / 2, 0);
+
+  const coneMat = new THREE.MeshBasicMaterial({
+    color: config.swathColor,
+    transparent: true,
+    opacity: 0.14,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+
+  const swathCone = new THREE.Mesh(coneGeo, coneMat);
+  swathCone.position.set(0, -1.9, 0);
+  satGroup.add(swathCone);
+
+  // Ground scanning footprint ring on Earth surface
+  const ringGeo = new THREE.RingGeometry(swathRadius * 0.78, swathRadius, 32);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: config.swathColor,
+    transparent: true,
+    opacity: 0.45,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const groundRing = new THREE.Mesh(ringGeo, ringMat);
+  groundRing.rotation.x = Math.PI / 2;
+  groundRing.position.set(0, -coneHeight - 1.9, 0);
+  satGroup.add(groundRing);
+
+  return {
+    group: satGroup,
+    swathCone: swathCone,
+    groundRing: groundRing,
+    solarYoke: solarYokeGroup,
+  };
+}
+
+// Initializes the 3 NASA satellites in realistic 3D orbits around Earth
+function init3DSpacecraftConstellation() {
+  if (!state.globe) return;
+  const scene = state.globe.scene();
+  if (!scene) return;
+
+  console.log('🛰️ Initializing Realistic NASA Spacecraft Constellation (Terra, Aqua, VIIRS)...');
+
+  // Clear any existing satellites
+  if (spacecraftState.satellites.length > 0) {
+    spacecraftState.satellites.forEach(s => {
+      if (s.group) scene.remove(s.group);
+      if (s.pathLine) scene.remove(s.pathLine);
+    });
+    spacecraftState.satellites = [];
+  }
+
+  // Create floating HUD label container
+  const labelsContainer = document.getElementById('satellite-floating-labels');
+  if (labelsContainer) labelsContainer.innerHTML = '';
+
+  SATELLITE_CONFIGS.forEach(cfg => {
+    // 1. Build 3D Spacecraft Model
+    const model = createRealisticSatelliteModel(cfg);
+    scene.add(model.group);
+
+    // 2. Build 3D Orbital Trajectory Line Loop
+    const pathGeom = new THREE.BufferGeometry();
+    const pts = [];
+    const r = cfg.altitude;
+    const i = cfg.inclinationDeg * (Math.PI / 180);
+    const Omega = cfg.raanDeg * (Math.PI / 180);
+
+    for (let deg = 0; deg <= 360; deg += 3) {
+      const rad = deg * (Math.PI / 180);
+      const px = r * Math.cos(rad) * Math.cos(Omega) - r * Math.sin(rad) * Math.cos(i) * Math.sin(Omega);
+      const py = r * Math.sin(rad) * Math.sin(i);
+      const pz = -r * Math.cos(rad) * Math.sin(Omega) - r * Math.sin(rad) * Math.cos(i) * Math.cos(Omega);
+      pts.push(new THREE.Vector3(px, py, pz));
+    }
+    pathGeom.setFromPoints(pts);
+
+    const pathMat = new THREE.LineBasicMaterial({
+      color: cfg.swathColor,
+      transparent: true,
+      opacity: 0.32,
+      blending: THREE.AdditiveBlending,
+    });
+    const pathLine = new THREE.LineLoop(pathGeom, pathMat);
+    scene.add(pathLine);
+
+    // 3. Create Floating HUD Badge
+    let badgeEl = null;
+    if (labelsContainer) {
+      badgeEl = document.createElement('div');
+      badgeEl.className = `sat-floating-badge ${cfg.badgeClass}`;
+      badgeEl.id = `sat-badge-${cfg.id}`;
+      badgeEl.innerHTML = `
+        <span class="sat-badge-dot ${cfg.dotClass}"></span>
+        <span class="sat-badge-name">${cfg.badgeLabel}</span>
+        <span class="sat-badge-meta">${cfg.badgeSub}</span>
+      `;
+      badgeEl.title = `${cfg.name} (${cfg.codeName})\nOrbit: ${cfg.orbitTimeDesc}\nResolution: ${cfg.resolution}\nClick to track spacecraft`;
+      badgeEl.onclick = (e) => {
+        e.stopPropagation();
+        trackSpacecraft(cfg.id);
+      };
+      labelsContainer.appendChild(badgeEl);
+    }
+
+    spacecraftState.satellites.push({
+      config: cfg,
+      group: model.group,
+      swathCone: model.swathCone,
+      groundRing: model.groundRing,
+      solarYoke: model.solarYoke,
+      pathLine: pathLine,
+      badgeElement: badgeEl,
+      currentLat: 0,
+      currentLng: 0,
+    });
+  });
+
+  // Start smooth real-time animation loop
+  if (!spacecraftState.animFrameId) {
+    animateOrbitalConstellation();
+  }
+}
+
+// Continuous Real-Time Animation Loop for Spacecraft & HUD Tracking
+function animateOrbitalConstellation() {
+  spacecraftState.frameCount++;
+  const t = spacecraftState.frameCount;
+
+  const camera = state.globe ? state.globe.camera() : null;
+  const is3DActive = state.activeStage === '3d';
+  const isDestroyed = typeof supernova !== 'undefined' && supernova && supernova.isDestroyed;
+
+  const tempMatrix = new THREE.Matrix4();
+
+  spacecraftState.satellites.forEach(sat => {
+    const cfg = sat.config;
+    const r = cfg.altitude;
+    const i = cfg.inclinationDeg * (Math.PI / 180);
+    const Omega = cfg.raanDeg * (Math.PI / 180);
+
+    const phase = cfg.phase0 + t * cfg.speed;
+
+    // Exact Celestial Keplerian Polar Orbit Coordinates
+    const x = r * Math.cos(phase) * Math.cos(Omega) - r * Math.sin(phase) * Math.cos(i) * Math.sin(Omega);
+    const y = r * Math.sin(phase) * Math.sin(i);
+    const z = -r * Math.cos(phase) * Math.sin(Omega) - r * Math.sin(phase) * Math.cos(i) * Math.cos(Omega);
+
+    // Tangent flight velocity vector
+    const dx = -r * Math.sin(phase) * Math.cos(Omega) - r * Math.cos(phase) * Math.cos(i) * Math.sin(Omega);
+    const dy = r * Math.cos(phase) * Math.sin(i);
+    const dz = r * Math.sin(phase) * Math.sin(Omega) - r * Math.cos(phase) * Math.cos(i) * Math.cos(Omega);
+
+    sat.group.position.set(x, y, z);
+
+    // Orientation: Nadir sensor (-Y in local space) points straight at Earth center (0, 0, 0)
+    // Up (+Y in local space) points outward away from Earth
+    const up = new THREE.Vector3(x, y, z).normalize();
+    const forward = new THREE.Vector3(dx, dy, dz).normalize();
+    const lateral = new THREE.Vector3().crossVectors(forward, up).normalize();
+    forward.crossVectors(up, lateral).normalize();
+
+    tempMatrix.makeBasis(lateral, up, forward.negate());
+    sat.group.quaternion.setFromRotationMatrix(tempMatrix);
+
+    // Subtle pulsing in ground footprint ring
+    if (sat.groundRing && sat.groundRing.material) {
+      sat.groundRing.material.opacity = 0.35 + Math.sin(t * 0.08) * 0.15;
+    }
+
+    // Convert coordinates to lat/lng for tracking
+    sat.currentLat = Math.asin(y / r) * (180 / Math.PI);
+    sat.currentLng = Math.atan2(-z, x) * (180 / Math.PI);
+
+    // Floating HUD Glass Badge Tracking
+    const badge = sat.badgeElement;
+    if (badge) {
+      if (!is3DActive || isDestroyed || !camera) {
+        badge.style.opacity = '0';
+        badge.style.pointerEvents = 'none';
+      } else {
+        const worldPos = sat.group.position.clone();
+        const screenPos = worldPos.clone().project(camera);
+
+        // Occlusion test: Is satellite hidden behind the Earth sphere (radius 100)?
+        const camDist = camera.position.length();
+        const satDist = worldPos.distanceTo(camera.position);
+        const camToSat = worldPos.clone().sub(camera.position).normalize();
+        const camDir = camera.position.clone().negate().normalize();
+        const dot = camToSat.dot(camDir);
+
+        const isBehind = screenPos.z > 1.0 || (satDist > camDist && Math.sqrt(screenPos.x * screenPos.x + screenPos.y * screenPos.y) < 0.62);
+
+        if (isBehind) {
+          badge.style.opacity = '0.12';
+        } else {
+          badge.style.opacity = '1';
+          badge.style.pointerEvents = 'auto';
+        }
+
+        const screenX = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+        const screenY = (-(screenPos.y * 0.5) + 0.5) * window.innerHeight;
+        badge.style.transform = `translate(${screenX}px, ${screenY - 22}px) translate(-50%, -100%)`;
+      }
+    }
+  });
+
+  spacecraftState.animFrameId = requestAnimationFrame(animateOrbitalConstellation);
+}
+
+// Smooth camera focus glide when clicking a satellite badge
+function trackSpacecraft(satId) {
+  const sat = spacecraftState.satellites.find(s => s.config.id === satId);
+  if (!sat || !state.globe) return;
+
+  console.log(`🎯 Tracking Spacecraft: ${sat.config.name} at [${sat.currentLat.toFixed(2)}°, ${sat.currentLng.toFixed(2)}°]...`);
+  state.globe.pointOfView({
+    lat: sat.currentLat,
+    lng: sat.currentLng,
+    altitude: 0.82,
+  }, 1200);
+}
+
+
+// Populate Global Fire// Populate Global Fire Flame Icons & Red Dots on the 3D Globe (Fix 4)
 function renderGlobalFireClustersOnGlobe(clusters) {
   if (!state.globe || !clusters) return;
 
