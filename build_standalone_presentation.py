@@ -65,23 +65,23 @@ html_template = """<!DOCTYPE html>
 
   <style>
     /* ==========================================================================
-       SPECTRALINK 7-SLIDE MASTER PRESENTATION ENGINE (FIRE & ORBITAL SATELLITES)
+       SPECTRALINK 7-SLIDE MASTER PRESENTATION ENGINE (REFINED AEROSPACE PALETTE)
        ========================================================================== */
     :root {
       --bg-space: #030611;
       --bg-panel: rgba(9, 15, 30, 0.85);
       --bg-card: rgba(14, 21, 38, 0.78);
-      --bg-card-hover: rgba(22, 34, 60, 0.94);
+      --bg-card-hover: rgba(20, 32, 58, 0.94);
       
       --cyan: #38BDF8;
-      --cyan-glow: rgba(56, 189, 248, 0.45);
+      --cyan-glow: rgba(56, 189, 248, 0.35);
       --blue: #2563EB;
       
-      /* Vibrant Flame Orange from SpectraLink Fire Logo */
+      /* Intentional Flame Accent (SpectraLink Fire Logo) - Used Selectively */
       --fire-orange: #FF5400;
-      --fire-glow: rgba(255, 84, 0, 0.55);
+      --fire-glow: rgba(255, 84, 0, 0.45);
       --fire-flame: #FF3B00;
-      --fire-amber: #FFA000;
+      --fire-amber: #F59E0B;
       --fire-red: #EF4444;
       --green: #10B981;
       --green-glow: rgba(16, 185, 129, 0.45);
@@ -90,8 +90,7 @@ html_template = """<!DOCTYPE html>
       --text-muted: #94A3B8;
       --text-dim: #64748B;
       --border: rgba(255, 255, 255, 0.08);
-      --border-cyan: rgba(56, 189, 248, 0.35);
-      --border-fire: rgba(255, 84, 0, 0.40);
+      --border-cyan: rgba(56, 189, 248, 0.28);
       
       --font-display: 'Space Grotesk', sans-serif;
       --font-sans: 'Inter', sans-serif;
@@ -110,8 +109,8 @@ html_template = """<!DOCTYPE html>
       background-color: var(--bg-space);
       background-image: 
         radial-gradient(ellipse 900px 500px at 15% 15%, rgba(14, 165, 233, 0.08), transparent 70%),
-        radial-gradient(ellipse 900px 600px at 85% 85%, rgba(255, 84, 0, 0.09), transparent 70%),
-        radial-gradient(circle 500px at 50% 50%, rgba(30, 58, 138, 0.07), transparent 75%);
+        radial-gradient(ellipse 700px 450px at 85% 85%, rgba(30, 58, 138, 0.07), transparent 70%),
+        radial-gradient(circle 500px at 50% 50%, rgba(15, 23, 42, 0.4), transparent 75%);
       color: var(--text-main);
       font-family: var(--font-sans);
       overflow: hidden;
@@ -120,7 +119,7 @@ html_template = """<!DOCTYPE html>
       user-select: none;
     }
 
-    /* Ambient Interactive Canvas (Stars + Rising Fire Embers + Background Satellites) */
+    /* Ambient Interactive Canvas (Stars + Subtle Distant Fire Sparks) */
     #ambient-canvas {
       position: fixed;
       inset: 0;
@@ -148,16 +147,16 @@ html_template = """<!DOCTYPE html>
       z-index: 50;
     }
 
-    /* Top Progress Fire Micro-Bar */
+    /* Top Progress Micro-Bar (Clean Cyan to Subtle Orange) */
     #top-progress-bar {
       position: absolute;
       bottom: 0;
       left: 0;
-      height: 2.5px;
-      background: linear-gradient(90deg, #38BDF8, #FF5400, #FF3B00);
+      height: 2px;
+      background: linear-gradient(90deg, #38BDF8, #0284C7 85%, #FF5400);
       width: 14.28%;
       transition: width 0.4s var(--easing);
-      box-shadow: 0 0 10px var(--fire-glow);
+      box-shadow: 0 0 8px var(--cyan-glow);
     }
 
     .header-brand {
@@ -170,7 +169,6 @@ html_template = """<!DOCTYPE html>
       height: 38px;
       width: auto;
       object-fit: contain;
-      filter: drop-shadow(0 0 8px rgba(255, 84, 0, 0.4));
     }
 
     .brand-divider {
@@ -210,8 +208,8 @@ html_template = """<!DOCTYPE html>
       display: flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255, 84, 0, 0.08);
-      border: 1px solid rgba(255, 84, 0, 0.28);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
       padding: 4px 12px;
       border-radius: 999px;
       font-family: var(--font-mono);
@@ -232,7 +230,7 @@ html_template = """<!DOCTYPE html>
 
     .sat-dot.terra { background: #38BDF8; box-shadow: 0 0 6px #38BDF8; }
     .sat-dot.aqua { background: #60A5FA; box-shadow: 0 0 6px #60A5FA; }
-    .sat-dot.viirs { background: #FF5400; box-shadow: 0 0 6px #FF5400; animation: pulseFire 1.4s infinite; }
+    .sat-dot.viirs { background: #FF5400; box-shadow: 0 0 6px #FF5400; }
 
     .header-status {
       display: flex;
@@ -253,9 +251,8 @@ html_template = """<!DOCTYPE html>
     }
 
     .slide-progress-pill .curr {
-      color: var(--fire-orange);
+      color: var(--cyan);
       font-weight: 700;
-      text-shadow: 0 0 8px rgba(255, 84, 0, 0.4);
     }
 
     .header-actions {
@@ -283,19 +280,19 @@ html_template = """<!DOCTYPE html>
     .btn-header-action:hover {
       color: #fff;
       background: rgba(255, 255, 255, 0.08);
-      border-color: var(--border-fire);
+      border-color: var(--border-cyan);
     }
 
     .btn-live-launch {
-      background: rgba(255, 84, 0, 0.12);
-      border-color: rgba(255, 84, 0, 0.4);
-      color: var(--fire-orange);
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: var(--cyan);
     }
 
     .btn-live-launch:hover {
-      background: var(--fire-orange);
-      color: #fff;
-      box-shadow: 0 0 18px var(--fire-glow);
+      background: var(--cyan);
+      color: #030712;
+      box-shadow: 0 0 16px var(--cyan-glow);
     }
 
     /* Presentation Main Container */
@@ -353,7 +350,7 @@ html_template = """<!DOCTYPE html>
       font-family: var(--font-mono);
       font-size: 0.72rem;
       font-weight: 700;
-      color: var(--fire-orange);
+      color: var(--cyan);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin-bottom: 4px;
@@ -369,11 +366,7 @@ html_template = """<!DOCTYPE html>
     }
 
     .slide-title .highlight {
-      color: var(--fire-orange);
-      background: linear-gradient(90deg, #FF5400, #FF3B00, #FFA000);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 12px rgba(255, 84, 0, 0.4));
+      color: var(--cyan);
     }
 
     .slide-subtitle {
@@ -384,7 +377,7 @@ html_template = """<!DOCTYPE html>
       max-width: 950px;
     }
 
-    /* Glass Cards with Warm Thermal Touch */
+    /* Refined Clean Glass Cards */
     .glass-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -404,14 +397,14 @@ html_template = """<!DOCTYPE html>
       left: 15%;
       right: 15%;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 84, 0, 0.3), transparent);
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.25), transparent);
       pointer-events: none;
     }
 
     .glass-card:hover {
       background: var(--bg-card-hover);
-      border-color: rgba(255, 84, 0, 0.35);
-      box-shadow: 0 8px 36px rgba(0, 0, 0, 0.55), 0 0 20px rgba(255, 84, 0, 0.15);
+      border-color: rgba(56, 189, 248, 0.3);
+      box-shadow: 0 8px 36px rgba(0, 0, 0, 0.55);
     }
 
     /* Slide 1: Hero Layout */
@@ -433,30 +426,25 @@ html_template = """<!DOCTYPE html>
       letter-spacing: -0.02em;
     }
 
+    /* Tasteful fire glow reserved exclusively for "Breathe Fire" */
     .hero-fire-glow {
-      background: linear-gradient(135deg, #FF3B00 0%, #FF5400 45%, #FFA000 100%);
+      background: linear-gradient(135deg, #FF3B00 0%, #FF5400 50%, #FFA000 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 16px rgba(255, 84, 0, 0.6));
-      animation: flamePulse 2.8s infinite alternate;
-    }
-
-    @keyframes flamePulse {
-      0% { filter: drop-shadow(0 0 12px rgba(255, 84, 0, 0.5)); }
-      100% { filter: drop-shadow(0 0 26px rgba(255, 84, 0, 0.85)); }
+      filter: drop-shadow(0 0 14px rgba(255, 84, 0, 0.5));
     }
 
     .hero-partnership-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255, 84, 0, 0.08);
-      border: 1px solid rgba(255, 84, 0, 0.3);
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
       padding: 6px 14px;
       border-radius: 20px;
       font-family: var(--font-mono);
       font-size: 0.72rem;
-      color: var(--fire-orange);
+      color: var(--cyan);
       margin-bottom: 14px;
     }
 
@@ -485,9 +473,8 @@ html_template = """<!DOCTYPE html>
       left: 0;
       width: 3px;
       height: 100%;
-      background: var(--fire-orange);
-      opacity: 0.8;
-      box-shadow: 0 0 8px var(--fire-orange);
+      background: var(--cyan);
+      opacity: 0.6;
     }
 
     .hero-stat-box .val {
@@ -505,15 +492,14 @@ html_template = """<!DOCTYPE html>
     }
 
     .hero-question-card {
-      background: rgba(255, 84, 0, 0.06);
-      border: 1px solid rgba(255, 84, 0, 0.28);
+      background: rgba(56, 189, 248, 0.05);
+      border: 1px solid rgba(56, 189, 248, 0.22);
       border-radius: 12px;
       padding: 16px 20px;
       margin-top: 18px;
       font-size: 0.92rem;
       color: #E2E8F0;
       line-height: 1.55;
-      box-shadow: 0 0 24px rgba(255, 84, 0, 0.08);
     }
 
     /* 3D Holographic Globe Canvas Container with Scanning Beams */
@@ -529,7 +515,7 @@ html_template = """<!DOCTYPE html>
       width: 440px;
       height: 440px;
       cursor: grab;
-      filter: drop-shadow(0 0 45px rgba(255, 84, 0, 0.25));
+      filter: drop-shadow(0 0 45px rgba(56, 189, 248, 0.20));
     }
 
     #hero-globe-canvas:active {
@@ -589,10 +575,10 @@ html_template = """<!DOCTYPE html>
     }
 
     .btn-sim-mode.active {
-      background: var(--fire-orange);
-      color: #fff;
+      background: var(--cyan);
+      color: #030712;
       font-weight: 700;
-      box-shadow: 0 0 12px var(--fire-glow);
+      box-shadow: 0 0 10px var(--cyan-glow);
     }
 
     .sim-threshold-row {
@@ -609,7 +595,7 @@ html_template = """<!DOCTYPE html>
 
     .sim-slider {
       flex: 1;
-      accent-color: var(--fire-orange);
+      accent-color: var(--cyan);
       cursor: pointer;
     }
 
@@ -622,7 +608,7 @@ html_template = """<!DOCTYPE html>
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 84, 0, 0.1);
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
     }
 
     .dual-grid-wrapper {
@@ -647,14 +633,14 @@ html_template = """<!DOCTYPE html>
     .ground-fire-source {
       position: absolute;
       border-radius: 50%;
-      background: radial-gradient(circle, #FFF7ED 5%, #FF5400 35%, #FF3B00 65%, transparent 85%);
+      background: radial-gradient(circle, #FFF7ED 10%, #FF5400 40%, #FF3B00 70%, transparent 90%);
       filter: blur(2px);
-      animation: pulseFire 1.5s ease-in-out infinite;
+      animation: pulseFire 1.6s ease-in-out infinite;
     }
 
     @keyframes pulseFire {
-      0%, 100% { opacity: 0.85; transform: scale(1); filter: blur(2px) drop-shadow(0 0 8px #FF5400); }
-      50% { opacity: 1; transform: scale(1.15); filter: blur(2.5px) drop-shadow(0 0 16px #FF3B00); }
+      0%, 100% { opacity: 0.85; transform: scale(1); filter: blur(2px); }
+      50% { opacity: 1; transform: scale(1.12); filter: blur(2.5px); }
     }
 
     .grid-svg-overlay {
@@ -708,8 +694,8 @@ html_template = """<!DOCTYPE html>
 
     .pillar-card:hover {
       transform: translateY(-4px);
-      border-color: var(--fire-orange);
-      box-shadow: 0 10px 30px rgba(255, 84, 0, 0.2);
+      border-color: var(--cyan);
+      box-shadow: 0 10px 30px rgba(56, 189, 248, 0.15);
     }
 
     .pillar-header-row {
@@ -723,9 +709,9 @@ html_template = """<!DOCTYPE html>
       font-family: var(--font-mono);
       font-size: 0.8rem;
       font-weight: 700;
-      color: var(--fire-orange);
-      background: rgba(255, 84, 0, 0.12);
-      border: 1px solid var(--border-fire);
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid var(--border-cyan);
       padding: 3px 8px;
       border-radius: 6px;
     }
@@ -750,13 +736,13 @@ html_template = """<!DOCTYPE html>
 
     .pillar-formula-box {
       background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(255, 84, 0, 0.25);
+      border: 1px solid rgba(56, 189, 248, 0.2);
       border-radius: 6px;
       padding: 6px 10px;
       margin-top: 10px;
       font-family: var(--font-mono);
       font-size: 0.72rem;
-      color: #FF5400;
+      color: #38BDF8;
       text-align: center;
     }
 
@@ -779,7 +765,7 @@ html_template = """<!DOCTYPE html>
 
     .pillar-features-list li::before {
       content: '✦';
-      color: var(--fire-orange);
+      color: var(--cyan);
       font-size: 0.65rem;
     }
 
@@ -787,7 +773,7 @@ html_template = """<!DOCTYPE html>
     .sensor-bus-strip {
       margin-top: 14px;
       background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--border-fire);
+      border: 1px solid var(--border-cyan);
       border-radius: 10px;
       padding: 8px 16px;
       display: flex;
@@ -798,7 +784,7 @@ html_template = """<!DOCTYPE html>
     }
 
     .sensor-bus-label {
-      color: var(--fire-orange);
+      color: var(--cyan);
       font-weight: 700;
       display: flex;
       align-items: center;
@@ -841,8 +827,8 @@ html_template = """<!DOCTYPE html>
     }
 
     .race-row:hover, .race-row.active {
-      background: rgba(255, 84, 0, 0.08);
-      border-color: var(--border-fire);
+      background: rgba(56, 189, 248, 0.08);
+      border-color: var(--border-cyan);
     }
 
     .race-meta {
@@ -901,9 +887,9 @@ html_template = """<!DOCTYPE html>
     }
 
     .btn-biome-tab.active {
-      background: rgba(255, 84, 0, 0.15);
-      border-color: var(--fire-orange);
-      color: var(--fire-orange);
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
       font-weight: 600;
     }
 
@@ -948,15 +934,15 @@ html_template = """<!DOCTYPE html>
     }
 
     .btn-cta-cyan {
-      background: linear-gradient(135deg, #FF3B00, #FF5400, #FFA000);
+      background: linear-gradient(135deg, #0284C7, #0EA5E9);
       color: #fff;
-      box-shadow: 0 0 24px rgba(255, 84, 0, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 24px rgba(14, 165, 233, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .btn-cta-cyan:hover {
       transform: translateY(-2px);
-      box-shadow: 0 0 38px rgba(255, 84, 0, 0.75);
+      box-shadow: 0 0 36px rgba(14, 165, 233, 0.6);
     }
 
     .btn-cta-ghost {
@@ -967,7 +953,7 @@ html_template = """<!DOCTYPE html>
 
     .btn-cta-ghost:hover {
       background: rgba(255, 255, 255, 0.1);
-      border-color: var(--border-fire);
+      border-color: var(--border-cyan);
     }
 
     /* Bottom Navigation Dock */
@@ -1009,16 +995,16 @@ html_template = """<!DOCTYPE html>
     }
 
     .dot-step:hover {
-      border-color: var(--border-fire);
+      border-color: var(--border-cyan);
       color: #fff;
     }
 
     .dot-step.active {
-      background: rgba(255, 84, 0, 0.15);
-      border-color: var(--fire-orange);
-      color: var(--fire-orange);
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
       font-weight: 700;
-      box-shadow: 0 0 10px var(--fire-glow);
+      box-shadow: 0 0 10px var(--cyan-glow);
     }
 
     .nav-arrow-btns {
@@ -1044,7 +1030,7 @@ html_template = """<!DOCTYPE html>
     .btn-nav-arrow:hover {
       color: #fff;
       background: rgba(255, 255, 255, 0.1);
-      border-color: var(--border-fire);
+      border-color: var(--border-cyan);
     }
 
     /* Keyboard Shortcuts Modal */
@@ -1069,12 +1055,12 @@ html_template = """<!DOCTYPE html>
 
     .shortcuts-card {
       background: #0B1224;
-      border: 1px solid var(--border-fire);
+      border: 1px solid var(--border-cyan);
       border-radius: 16px;
       padding: 24px;
       max-width: 480px;
       width: 90%;
-      box-shadow: 0 0 40px rgba(255, 84, 0, 0.25);
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.25);
     }
 
     .shortcut-row {
@@ -1093,7 +1079,7 @@ html_template = """<!DOCTYPE html>
       padding: 2px 8px;
       font-family: var(--font-mono);
       font-size: 0.75rem;
-      color: var(--fire-orange);
+      color: var(--cyan);
     }
 
     /* Toast Notification */
@@ -1103,13 +1089,13 @@ html_template = """<!DOCTYPE html>
       left: 50%;
       transform: translateX(-50%) translateY(20px);
       background: #0F172A;
-      border: 1px solid var(--fire-orange);
+      border: 1px solid var(--cyan);
       color: #fff;
       padding: 8px 18px;
       border-radius: 20px;
       font-family: var(--font-mono);
       font-size: 0.8rem;
-      box-shadow: 0 0 20px var(--fire-glow);
+      box-shadow: 0 0 20px var(--cyan-glow);
       opacity: 0;
       pointer-events: none;
       transition: all 0.3s ease;
@@ -1124,7 +1110,7 @@ html_template = """<!DOCTYPE html>
 </head>
 <body>
 
-  <!-- Ambient Interactive Starfield Canvas (With Rising Flame Embers) -->
+  <!-- Ambient Interactive Starfield Canvas (With Delicate Subtle Cosmic Fire Embers) -->
   <canvas id="ambient-canvas"></canvas>
 
   <!-- Top Telemetry Header -->
@@ -1144,7 +1130,7 @@ html_template = """<!DOCTYPE html>
         <span style="color:var(--text-dim);">3D SATELLITES:</span>
         <div class="sat-tag"><span class="sat-dot terra"></span><span>Terra</span></div>
         <div class="sat-tag"><span class="sat-dot aqua"></span><span>Aqua</span></div>
-        <div class="sat-tag"><span class="sat-dot viirs"></span><span style="color:var(--fire-orange); font-weight:700;">VIIRS</span></div>
+        <div class="sat-tag"><span class="sat-dot viirs"></span><span style="color:var(--fire-orange);">VIIRS</span></div>
       </div>
     </div>
 
@@ -1192,7 +1178,7 @@ html_template = """<!DOCTYPE html>
           <div>
             <div class="hero-partnership-badge">
               <img src="REPLACE_SPACE_APPS_BASE64" alt="NASA Space Apps" style="height: 14px;">
-              <span>🔥 NASA SPACE APPS CHALLENGE 2024 · GLOBAL SUBMISSION</span>
+              <span>NASA SPACE APPS CHALLENGE · GLOBAL SUBMISSION</span>
             </div>
             <h1 class="hero-title">
               Watching Earth <span class="hero-fire-glow">Breathe Fire</span>
@@ -1202,7 +1188,7 @@ html_template = """<!DOCTYPE html>
             </p>
 
             <div class="hero-question-card">
-              <strong style="color: var(--fire-orange);">🔥 The Core Scientific Dilemma:</strong> In 2012, raw satellite fire detections surged by <strong style="color:#FF5400;">+404%</strong>. Was Earth truly burning 4x hotter, or did our orbital cameras simply get sharper? Without sensor calibration, climate science risks mistaking a technological sensor upgrade for an environmental crisis.
+              <strong style="color: var(--cyan);">The Core Scientific Dilemma:</strong> In 2012, raw satellite fire detections surged by <strong style="color:var(--fire-orange);">+404%</strong>. Was Earth truly burning 4x hotter, or did our orbital cameras simply get sharper? Without sensor calibration, climate science risks mistaking a technological sensor upgrade for an environmental crisis.
             </div>
 
             <div class="hero-stat-grid">
@@ -1219,7 +1205,7 @@ html_template = """<!DOCTYPE html>
                 <span class="lbl">Physics-Informed Features</span>
               </div>
               <div class="hero-stat-box">
-                <span class="val" style="color: var(--fire-orange);">98.7%</span>
+                <span class="val" style="color: var(--cyan);">98.7%</span>
                 <span class="lbl">Cross-Sensor Calibration Parity</span>
               </div>
             </div>
@@ -1258,7 +1244,7 @@ html_template = """<!DOCTYPE html>
           <div class="glass-card sim-card-wrap">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-size: 0.88rem; font-weight: 700; color: #fff;">Interactive Sensor Resolution Simulator:</span>
-              <span id="sim-stat-count" style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; color: var(--fire-orange);">🔥 1 MODIS vs. 6 VIIRS</span>
+              <span id="sim-stat-count" style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; color: var(--cyan);">1 MODIS vs. 6 VIIRS</span>
             </div>
             
             <div class="sim-btn-group">
@@ -1271,7 +1257,7 @@ html_template = """<!DOCTYPE html>
             <div class="sim-threshold-row">
               <span style="color: var(--text-muted);">Thermal Fire Threshold:</span>
               <input type="range" id="sim-threshold-slider" class="sim-slider" min="5" max="35" value="12" oninput="updateSimThreshold(this.value)">
-              <span id="sim-threshold-val" style="font-family: var(--font-mono); color: var(--fire-orange); font-weight: 700;">12 MW</span>
+              <span id="sim-threshold-val" style="font-family: var(--font-mono); color: var(--cyan); font-weight: 700;">12 MW</span>
             </div>
 
             <!-- Single Grid -->
@@ -1296,7 +1282,7 @@ html_template = """<!DOCTYPE html>
                 </div>
               </div>
               <div class="dual-panel">
-                <span style="font-size: 0.72rem; color: #FF5400; font-weight: 700;">VIIRS 375m (7.1x Sharper)</span>
+                <span style="font-size: 0.72rem; color: var(--fire-orange); font-weight: 700;">VIIRS 375m (7.1x Sharper)</span>
                 <div class="pixel-grid-container dual-box">
                   <div class="ground-fire-source" style="top: 42%; left: 45%; width: 15%; height: 15%;"></div>
                   <div class="ground-fire-source" style="top: 48%; left: 38%; width: 10%; height: 10%;"></div>
@@ -1449,11 +1435,11 @@ html_template = """<!DOCTYPE html>
             
             <div class="race-row active" onclick="selectModel(0)">
               <div class="race-meta">
-                <span style="color: var(--fire-orange); font-weight: 700;">🥇 6. SpectraNet Hybrid Stacking (Ensemble)</span>
-                <span style="color: var(--fire-orange);">98.7% R² (r = 0.9934)</span>
+                <span style="color: var(--cyan); font-weight: 700;">🥇 6. SpectraNet Hybrid Stacking (Ensemble)</span>
+                <span style="color: var(--cyan);">98.7% R² (r = 0.9934)</span>
               </div>
               <div class="race-bar-track">
-                <div class="race-bar-fill" style="width: 98.7%; background: linear-gradient(90deg, #FF3B00, #FF5400, #FFA000); box-shadow: 0 0 10px var(--fire-glow);"></div>
+                <div class="race-bar-fill" style="width: 98.7%; background: linear-gradient(90deg, #0284C7, #38BDF8); box-shadow: 0 0 10px var(--cyan-glow);"></div>
               </div>
             </div>
 
@@ -1463,7 +1449,7 @@ html_template = """<!DOCTYPE html>
                 <span>98.2% R²</span>
               </div>
               <div class="race-bar-track">
-                <div class="race-bar-fill" style="width: 98.2%; background: #FF5400;"></div>
+                <div class="race-bar-fill" style="width: 98.2%; background: #38BDF8;"></div>
               </div>
             </div>
 
@@ -1513,7 +1499,7 @@ html_template = """<!DOCTYPE html>
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <span id="model-inspect-title" style="font-family: var(--font-display); font-size: 1.15rem; color: #fff; font-weight: 700;">SpectraNet Hybrid Stacking</span>
-                <span id="model-inspect-badge" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--fire-orange); background: rgba(255,84,0,0.14); padding: 3px 8px; border-radius: 4px;">WINNER</span>
+                <span id="model-inspect-badge" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--cyan); background: rgba(56,189,248,0.12); padding: 3px 8px; border-radius: 4px;">WINNER</span>
               </div>
               <p id="model-inspect-desc" style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.55;">
                 Two-tier architecture: Base tier leverages gradient-boosted decision trees for sharp non-linear fuel transitions, blended with Huber-loss neural networks to prevent catastrophic over-prediction on extreme mega-fires.
@@ -1531,7 +1517,7 @@ html_template = """<!DOCTYPE html>
               </div>
               <div style="display:flex; justify-content:space-between;">
                 <span style="color: var(--text-dim);">Generalization Error:</span>
-                <span id="model-inspect-error" style="color: var(--fire-orange);">RMSE 14.2 (Low variance)</span>
+                <span id="model-inspect-error" style="color: var(--cyan);">RMSE 14.2 (Low variance)</span>
               </div>
             </div>
 
@@ -1580,8 +1566,8 @@ html_template = """<!DOCTYPE html>
           <!-- Right: 25-Year Calendar Heatmap with Biome Switcher -->
           <div class="chart-frame-box" style="height: 410px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <span style="font-size: 0.85rem; font-weight: 700; color: #fff;">🔥 25-Year Seasonal Burning Matrix:</span>
-              <span id="biome-current-label" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--fire-orange);">Nile Delta, Egypt</span>
+              <span style="font-size: 0.85rem; font-weight: 700; color: #fff;">25-Year Seasonal Burning Matrix:</span>
+              <span id="biome-current-label" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--cyan);">Nile Delta, Egypt</span>
             </div>
             
             <div class="biome-btn-group">
@@ -1614,18 +1600,18 @@ html_template = """<!DOCTYPE html>
         <div class="forecast-layout">
           <!-- Left: Seiler & Crutzen Carbon Accounting -->
           <div style="display: flex; flex-direction: column; gap: 14px;">
-            <div class="glass-card" style="border-left: 4px solid var(--fire-orange);">
-              <span style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--fire-orange);">🔥 SEILER & CRUTZEN COMBUSTION PHYSICS</span>
+            <div class="glass-card">
+              <span style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--cyan);">SEILER & CRUTZEN COMBUSTION PHYSICS</span>
               <h4 style="font-size: 1.1rem; color: #fff; margin: 4px 0 8px;">Atmospheric Carbon Release (CO₂)</h4>
               <span id="slide6-co2-val" style="font-family: var(--font-display); font-size: 2.1rem; font-weight: 700; color: #fff;">968.1 kt</span>
               <p style="font-size: 0.76rem; color: var(--text-dim); margin-top: 4px;">Computed via M = A · B · C · α using harmonized radiative energy and biome fuel loads.</p>
-              <div style="margin-top: 8px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--fire-orange);">
+              <div style="margin-top: 8px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--cyan);">
                 ✦ Equivalent to 2.1 Million Barrels of Oil Combusted
               </div>
             </div>
 
-            <div class="glass-card" style="border-left: 4px solid #FF3B00;">
-              <span style="font-family: var(--font-mono); font-size: 0.68rem; color: #FF3B00;">⚠️ PUBLIC HEALTH & AIR QUALITY INVENTORY</span>
+            <div class="glass-card">
+              <span style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--fire-orange);">⚠️ PUBLIC HEALTH & AIR QUALITY INVENTORY</span>
               <h4 style="font-size: 1.1rem; color: #fff; margin: 4px 0 8px;">Aerosol Particulates (PM₂.₅)</h4>
               <span id="slide6-pm25-val" style="font-family: var(--font-display); font-size: 2.1rem; font-weight: 700; color: var(--fire-orange);">5,455.1 Tons</span>
               <p style="font-size: 0.76rem; color: var(--text-dim); margin-top: 4px;">Tracks fine respiratory smoke plumes for regional health advisories and downwind AQI warnings.</p>
@@ -1675,13 +1661,13 @@ html_template = """<!DOCTYPE html>
             </div>
           </div>
 
-          <div class="glass-card" style="border-top: 3px solid var(--fire-orange);">
+          <div class="glass-card" style="border-top: 3px solid var(--blue);">
             <div style="font-size: 1.8rem; margin-bottom: 8px;">🛰️</div>
             <h3 style="font-family: var(--font-display); font-size: 1.25rem; color: #fff; margin-bottom: 6px;">Stage 2: Regional Mission Console</h3>
             <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.55;">
               High-resolution Leaflet GIS maps, radar cluster markers, NASA infrared thermal climatology heatmaps, and full 48-column continuous harmonized CSV downloads.
             </p>
-            <div style="margin-top: 12px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--fire-orange);">
+            <div style="margin-top: 12px; font-family: var(--font-mono); font-size: 0.72rem; color: #60A5FA;">
               ✦ 4-Tab Analytical Console · Seiler & Crutzen CO₂ · 2026 Forecast
             </div>
           </div>
@@ -1700,7 +1686,7 @@ html_template = """<!DOCTYPE html>
         </div>
 
         <div style="margin-top: 24px; text-align: center; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim);">
-          NASA SPACE APPS CHALLENGE 2024 · TEAM SPECTRALINK · OPEN-SOURCE EARTH OBSERVATION
+          NASA SPACE APPS CHALLENGE · TEAM SPECTRALINK · OPEN-SOURCE EARTH OBSERVATION
         </div>
       </div>
     </section>
@@ -2064,7 +2050,7 @@ html_template = """<!DOCTYPE html>
           name: 'VIIRS Suomi-NPP',
           timeDesc: '1:30 PM · 375m HR',
           color: '#FF5400',
-          swathColor: 'rgba(255, 84, 0, 0.30)',
+          swathColor: 'rgba(255, 84, 0, 0.28)',
           altitude: R * 1.40,
           speed: 0.014,
           phase: 4.36,
@@ -2111,7 +2097,7 @@ html_template = """<!DOCTYPE html>
         // Atmospheric glowing rim
         const haloGrad = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R * 1.35);
         haloGrad.addColorStop(0, 'rgba(56, 189, 248, 0.12)');
-        haloGrad.addColorStop(0.5, 'rgba(255, 84, 0, 0.06)');
+        haloGrad.addColorStop(0.7, 'rgba(14, 165, 233, 0.03)');
         haloGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = haloGrad;
         ctx.beginPath();
@@ -2266,7 +2252,7 @@ html_template = """<!DOCTYPE html>
             ctx.fillRect(5, -3, 11, 6);
             ctx.strokeRect(5, -3, 11, 6);
 
-            // Main Bus Body (Gold foil or Fiery orange for VIIRS)
+            // Main Bus Body
             ctx.fillStyle = sat.id === 'viirs' ? '#FF5400' : '#EAB308';
             ctx.fillRect(-5, -4, 10, 8);
             ctx.strokeStyle = '#fff';
@@ -2335,7 +2321,7 @@ html_template = """<!DOCTYPE html>
           rect.setAttribute('width', cellW);
           rect.setAttribute('height', cellH);
           rect.setAttribute('fill', 'rgba(255, 255, 255, 0.02)');
-          rect.setAttribute('stroke', sensorClass === 'active-modis' ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 84, 0, 0.3)');
+          rect.setAttribute('stroke', sensorClass === 'active-modis' ? 'rgba(255, 255, 255, 0.18)' : 'rgba(56, 189, 248, 0.25)');
           rect.setAttribute('stroke-width', sensorClass === 'active-modis' ? '1.5' : '1');
 
           const isHit = activeHits.some(([ar, ac]) => ar === r && ac === c);
@@ -2349,7 +2335,7 @@ html_template = """<!DOCTYPE html>
               const area = sensorClass === 'active-modis' ? '1,000,000 m² (1 km)' : '140,625 m² (375m)';
               const status = isHit ? '🔥 ACTIVE HOTSPOT EXCEEDING THRESHOLD' : '❄ Background Cool Ground';
               const rad = isHit ? (sensorClass === 'active-modis' ? '14.2 MW (Diluted)' : '28.6 MW (Resolved Core)') : '2.1 MW';
-              hud.innerHTML = `<strong>Cell [${r},${c}]</strong> · Area: <span style="color:#fff">${area}</span> · Radiance: <span style="color:var(--fire-orange)">${rad}</span> · <span style="color:${isHit ? '#FF5400' : '#64748B'}">${status}</span>`;
+              hud.innerHTML = `<strong>Cell [${r},${c}]</strong> · Area: <span style="color:#fff">${area}</span> · Radiance: <span style="color:var(--cyan)">${rad}</span> · <span style="color:${isHit ? 'var(--fire-orange)' : '#64748B'}">${status}</span>`;
             }
           };
 
@@ -2380,7 +2366,7 @@ html_template = """<!DOCTYPE html>
         dualContainer.classList.add('hidden');
         drawGridOnSvg(mainSvg, 3, 3, modisHits, 'active-modis');
         if (statCount) {
-          statCount.textContent = `🔥 ${modisHits.length} Hotspot Detected (Coarse Dilution)`;
+          statCount.textContent = `${modisHits.length} Hotspot Detected (Coarse Dilution)`;
           statCount.style.color = '#EF4444';
         }
       } else if (mode === 'viirs') {
@@ -2388,8 +2374,8 @@ html_template = """<!DOCTYPE html>
         dualContainer.classList.add('hidden');
         drawGridOnSvg(mainSvg, 8, 8, viirsHits, 'active-viirs');
         if (statCount) {
-          statCount.textContent = `🔥 ${viirsHits.length} Hotspots Detected (7.1x Sharper Resolution)`;
-          statCount.style.color = '#FF5400';
+          statCount.textContent = `${viirsHits.length} Hotspots Detected (7.1x Sharper Resolution)`;
+          statCount.style.color = 'var(--fire-orange)';
         }
       } else if (mode === 'split') {
         singleContainer.classList.add('hidden');
@@ -2397,14 +2383,14 @@ html_template = """<!DOCTYPE html>
         drawGridOnSvg(document.getElementById('sim-grid-svg-modis-dual'), 3, 3, modisHits, 'active-modis');
         drawGridOnSvg(document.getElementById('sim-grid-svg-viirs-dual'), 8, 8, viirsHits, 'active-viirs');
         if (statCount) {
-          statCount.textContent = `🔥 ${modisHits.length} MODIS vs. ${viirsHits.length} VIIRS (Same Physical Ground Fire)`;
-          statCount.style.color = '#FF5400';
+          statCount.textContent = `${modisHits.length} MODIS vs. ${viirsHits.length} VIIRS (Same Physical Ground Fire)`;
+          statCount.style.color = 'var(--cyan)';
         }
       }
     }
 
     // -------------------------------------------------------------------------
-    // Slide 2: Plotly Raw Trap Chart (With Fire Orange Discontinuity Beacon)
+    // Slide 2: Plotly Raw Trap Chart
     // -------------------------------------------------------------------------
     function renderRawTrapChart() {
       const dates = [];
@@ -2566,7 +2552,7 @@ html_template = """<!DOCTYPE html>
           y: harmVals,
           type: 'scatter',
           mode: 'lines',
-          line: { color: '#FF5400', width: 2.6 },
+          line: { color: '#38BDF8', width: 2.6 },
           name: 'SpectraLink Continuous Harmonized Series',
         });
       }
@@ -2585,7 +2571,7 @@ html_template = """<!DOCTYPE html>
     }
 
     // -------------------------------------------------------------------------
-    // Slide 5: 25-Year Calendar Heatmap (Wildfire Flame Colorscale)
+    // Slide 5: 25-Year Calendar Heatmap
     // -------------------------------------------------------------------------
     function renderCalendarSlideChart() {
       const bData = biomesData[state.currentBiome] || biomesData['nile'];
@@ -2607,7 +2593,6 @@ html_template = """<!DOCTYPE html>
         }
       }
 
-      // Authentic Wildfire Flame Colorscale (Obsidian to Flame Orange & Incandescent Gold)
       const trace = {
         z: zValues,
         x: years,
@@ -2677,8 +2662,8 @@ html_template = """<!DOCTYPE html>
         y: fcVals,
         type: 'scatter',
         mode: 'lines+markers',
-        marker: { size: 6, color: '#FF5400' },
-        line: { color: '#FF5400', width: 2.5, dash: 'dash' },
+        marker: { size: 6, color: '#F97316' },
+        line: { color: '#F97316', width: 2.5, dash: 'dash' },
         name: '2026 6-Month Projection',
       };
 
@@ -2686,7 +2671,7 @@ html_template = """<!DOCTYPE html>
         x: fcDates.concat(fcDates.slice().reverse()),
         y: ciUpper.concat(ciLower.slice().reverse()),
         fill: 'toself',
-        fillcolor: 'rgba(255, 84, 0, 0.18)',
+        fillcolor: 'rgba(249, 115, 22, 0.16)',
         line: { color: 'transparent' },
         name: '95% Confidence Band',
       };
@@ -2705,7 +2690,7 @@ html_template = """<!DOCTYPE html>
     }
 
     // -------------------------------------------------------------------------
-    // Ambient Canvas: Stars + RISING FLAME EMBERS (Earth Breathing Fire)
+    // Ambient Canvas: Distant Stars + Subtle Cosmic Embers
     // -------------------------------------------------------------------------
     function initAmbientCanvas() {
       const canvas = document.getElementById('ambient-canvas');
@@ -2719,7 +2704,7 @@ html_template = """<!DOCTYPE html>
       });
 
       // Distant Stars
-      const stars = Array.from({ length: 80 }, () => ({
+      const stars = Array.from({ length: 85 }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
         radius: Math.random() * 1.3,
@@ -2727,16 +2712,15 @@ html_template = """<!DOCTYPE html>
         twinkle: Math.random() * 0.02 + 0.005,
       }));
 
-      // Rising Fiery Embers (Real Fire Sparks Drifting Upwards)
-      const embers = Array.from({ length: 48 }, () => ({
+      // Subtle, gentle rising embers (tasteful whisper of heat, not overwhelming)
+      const embers = Array.from({ length: 16 }, () => ({
         x: Math.random() * w,
         y: Math.random() * h + 50,
-        radius: Math.random() * 2.2 + 0.8,
-        speedY: Math.random() * 0.7 + 0.3,
-        speedX: (Math.random() - 0.5) * 0.4,
-        alpha: Math.random() * 0.8 + 0.2,
-        flicker: Math.random() * 0.04 + 0.01,
-        color: Math.random() > 0.45 ? '#FF5400' : '#FFA000'
+        radius: Math.random() * 1.4 + 0.6,
+        speedY: Math.random() * 0.5 + 0.2,
+        speedX: (Math.random() - 0.5) * 0.3,
+        alpha: Math.random() * 0.45 + 0.15,
+        color: Math.random() > 0.5 ? 'rgba(255, 84, 0, ' : 'rgba(255, 160, 0, '
       }));
 
       let time = 0;
@@ -2755,34 +2739,22 @@ html_template = """<!DOCTYPE html>
           ctx.fill();
         });
 
-        // Render Rising Fiery Embers
+        // Render Subtle Embers
         embers.forEach(e => {
           e.y -= e.speedY;
-          e.x += Math.sin(time + e.radius) * 0.5 + e.speedX;
-          e.alpha += Math.sin(time * 3 + e.radius) * 0.02;
+          e.x += Math.sin(time + e.radius) * 0.4 + e.speedX;
 
-          // Recycle ember when it reaches top
-          if (e.y < -20) {
-            e.y = h + 20;
+          if (e.y < -15) {
+            e.y = h + 15;
             e.x = Math.random() * w;
-            e.alpha = Math.random() * 0.7 + 0.3;
           }
 
-          // Fiery particle with glow
-          ctx.fillStyle = e.color;
-          ctx.globalAlpha = Math.max(0.1, Math.min(0.9, e.alpha));
+          ctx.fillStyle = e.color + e.alpha + ')';
           ctx.beginPath();
           ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
           ctx.fill();
-
-          // Spark aura
-          ctx.fillStyle = 'rgba(255, 59, 0, 0.25)';
-          ctx.beginPath();
-          ctx.arc(e.x, e.y, e.radius * 2.5, 0, Math.PI * 2);
-          ctx.fill();
         });
 
-        ctx.globalAlpha = 1.0;
         requestAnimationFrame(render);
       }
       render();
@@ -2806,4 +2778,4 @@ with open(OUTPUT_ROOT_PRES, "w", encoding="utf-8") as f:
 with open(OUTPUT_STATIC_PRES, "w", encoding="utf-8") as f:
     f.write(final_html)
 
-print("Generated all presentation files with Fire Embers & 3D Satellites successfully!")
+print("Generated all presentation files with balanced aerospace styling successfully!")
