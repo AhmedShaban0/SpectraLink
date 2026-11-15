@@ -183,8 +183,11 @@ def serve_index():
 
 
 @app.get("/presentation")
+@app.get("/presentation.html")
 def serve_presentation():
-    standalone_path = os.path.join(BASE_DIR, "SpectraLink_Presentation_Standalone.html")
+    standalone_path = os.path.join(BASE_DIR, "presentation.html")
+    if not os.path.exists(standalone_path):
+        standalone_path = os.path.join(BASE_DIR, "SpectraLink_Presentation_Standalone.html")
     if os.path.exists(standalone_path):
         return FileResponse(standalone_path)
     return HTMLResponse("<h1>SpectraLink Presentation</h1><p>Building presentation assets...</p>")
