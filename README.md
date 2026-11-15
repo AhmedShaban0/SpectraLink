@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="static/logo_transparent.png" alt="SpectraLink Logo" width="220" />
+  <img src="static/spectralink_banner.jpg" alt="SpectraLink: Global Satellite Fire Harmonization" width="100%" style="border-radius: 10px;" />
 </p>
 
 <h1 align="center">SpectraLink</h1>
