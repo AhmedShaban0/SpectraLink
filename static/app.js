@@ -1333,26 +1333,37 @@ function renderLeafletRegionalMap(profile, hotspots, clusters) {
     fillOpacity: 0.04,
   }).addTo(state.map);
 
-  // 1. Render 🔥 Flame Icons at Major Fire Centers
+  // 1. Render Aerospace Radar Ping Target Reticles at Major Fire Centers
   state.mapLayers.flames = L.layerGroup();
   (clusters || []).forEach(cl => {
-    const flameIcon = L.divIcon({
-      className: 'flame-marker',
-      html: '🔥',
-      iconSize: [28, 28],
-      iconAnchor: [14, 14],
+    const radarIcon = L.divIcon({
+      className: 'radar-cluster-marker',
+      html: `
+        <div class="radar-ping-ring"></div>
+        <div class="radar-ping-core"></div>
+      `,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
     });
 
-    const marker = L.marker([cl.lat, cl.lng], { icon: flameIcon });
+    const marker = L.marker([cl.lat, cl.lng], { icon: radarIcon });
     marker.bindPopup(`
-      <div style="font-family: var(--font-sans); color: #0F172A; min-width: 160px;">
-        <div style="font-weight: 700; color: #EF4444; border-bottom: 1px solid #E2E8F0; padding-bottom: 3px; margin-bottom: 5px;">
-          🔥 ${cl.name}
+      <div class="dark-popup">
+        <div class="dark-popup-title">
+          <span style="color:#F97316;">⦿</span>
+          <span>${cl.name}</span>
         </div>
-        <div style="font-size: 11px; line-height: 1.5;">
-          <strong>Total Radiative Power:</strong> ${cl.frp_total} MW<br>
-          <strong>Regime:</strong> Primary Combustion Complex<br>
-          <strong>Coordinates:</strong> ${cl.lat.toFixed(3)}°, ${cl.lng.toFixed(3)}°
+        <div class="dark-popup-row">
+          <span class="dark-popup-lbl">Radiative Power:</span>
+          <span class="dark-popup-val" style="color:#F97316;">${Number(cl.frp_total).toLocaleString()} MW</span>
+        </div>
+        <div class="dark-popup-row">
+          <span class="dark-popup-lbl">Classification:</span>
+          <span class="dark-popup-val">Primary Combustion Core</span>
+        </div>
+        <div class="dark-popup-row">
+          <span class="dark-popup-lbl">Coordinates:</span>
+          <span class="dark-popup-val">${cl.lat.toFixed(3)}°, ${cl.lng.toFixed(3)}°</span>
         </div>
       </div>
     `);
@@ -1375,16 +1386,30 @@ function renderLeafletRegionalMap(profile, hotspots, clusters) {
     dot.sensorType = pt.sensor.includes('VIIRS') ? 'viirs' : 'modis';
 
     dot.bindPopup(`
-      <div style="font-family: var(--font-sans); color: #0F172A; min-width: 160px;">
-        <div style="font-weight: 700; color: #EF4444; border-bottom: 1px solid #E2E8F0; padding-bottom: 3px; margin-bottom: 5px;">
-          🔴 Active Satellite Hotspot
+      <div class="dark-popup">
+        <div class="dark-popup-title">
+          <span style="color:#38BDF8;">✦</span>
+          <span>Satellite Hotspot</span>
         </div>
-        <div style="font-size: 11px; line-height: 1.5;">
-          <strong>Sensor:</strong> ${pt.sensor}<br>
-          <strong>Fire Radiative Power:</strong> ${pt.frp_mw} MW<br>
-          <strong>Brightness Temp:</strong> ${pt.brightness_k} K<br>
-          <strong>Confidence:</strong> ${pt.confidence}<br>
-          <strong>Coordinates:</strong> ${pt.lat.toFixed(3)}°, ${pt.lng.toFixed(3)}°
+        <div class="dark-popup-row">
+          <span class="dark-popup-lbl">Sensor:</span>
+          <span class="dark-popup-val" style="color:#38BDF8;">${pt.sensor}</span>
+        </div>
+        <div class="dark-popup-row">
+          <span class="dark-popup-lbl">Radiative Power:</span>
+          <span class="dark-popup-val" style="color:#F97316;">${pt.frp_mw} MW</span>
+        </div>
+        <div class="dark-popup-row">
+          <span class="dark-popup-lbl">Brightness Temp:</span>
+          <span class="dark-popup-val">${pt.brightness_k} K</span>
+        </div>
+        <div class="dark-popup-row">
+          <span class="dark-popup-lbl">Confidence:</span>
+          <span class="dark-popup-val">${pt.confidence}</span>
+        </div>
+        <div class="dark-popup-row">
+          <span class="dark-popup-lbl">Coordinates:</span>
+          <span class="dark-popup-val">${pt.lat.toFixed(3)}°, ${pt.lng.toFixed(3)}°</span>
         </div>
       </div>
     `);
@@ -1425,7 +1450,7 @@ function updateKPIStrip(data, profile) {
 
   document.getElementById('active-model-name').textContent = data.selected_model.split('. ')[1] || 'SpectraNet Stacking';
 
-  // 4 Simple Modern Cards
+  // Update Continuous Telemetry Ribbon
   document.getElementById('kpi-total-hotspots').textContent = data.kpi.total_harmonized_hotspots.toLocaleString();
   document.getElementById('kpi-peak-months').textContent = data.kpi.peak_months || 'Sep – Oct';
   
@@ -1435,19 +1460,23 @@ function updateKPIStrip(data, profile) {
 
   const riskBadge = document.getElementById('kpi-risk-badge');
   const riskDetail = document.getElementById('kpi-risk-detail');
+  const statusPing = document.getElementById('kpi-status-ping');
 
   if (data.kpi.next_month_alert.includes('HIGH')) {
-    riskBadge.textContent = 'High Fire Season';
-    riskBadge.className = 'kpi-val text-red';
-    riskDetail.textContent = '🚨 Extreme Burning Conditions';
+    riskBadge.textContent = 'High Activity Advisory';
+    riskBadge.className = 'telemetry-metric text-red';
+    riskDetail.textContent = 'Elevated combustion activity expected';
+    if (statusPing) statusPing.className = 'status-indicator-ping red';
   } else if (data.kpi.next_month_alert.includes('WATCH')) {
-    riskBadge.textContent = 'Moderate Activity';
-    riskBadge.className = 'kpi-val text-amber';
-    riskDetail.textContent = '⚠️ Elevated Detection Advisory';
+    riskBadge.textContent = 'Moderate Seasonal Watch';
+    riskBadge.className = 'telemetry-metric text-amber';
+    riskDetail.textContent = 'Seasonal combustion watch active';
+    if (statusPing) statusPing.className = 'status-indicator-ping amber';
   } else {
     riskBadge.textContent = 'Quiet Season';
-    riskBadge.className = 'kpi-val text-green';
-    riskDetail.textContent = '✅ Low Baseline Fire Density';
+    riskBadge.className = 'telemetry-metric text-green';
+    riskDetail.textContent = 'Baseline low combustion conditions';
+    if (statusPing) statusPing.className = 'status-indicator-ping green';
   }
 }
 
@@ -1460,39 +1489,56 @@ function renderAllAnalyticsTabs(data) {
   renderForecastTab(data);
 }
 
-// TAB 1: Yearly Fire Calendar (1 Single Clean Heatmap + Takeaway)
+// TAB 1: Yearly Fire Calendar (NASA Infrared Thermal Radiant Heatmap)
 function renderCalendarTab(data) {
   const years = data.calendar_matrix.years;
   const months = data.calendar_matrix.months;
   const values = data.calendar_matrix.values;
 
-  // Set Plain-English Takeaway
+  // Set Technical Analytical Observation
   const peakMonthNames = data.climatology
     .filter(c => c.season_class === 'Peak Burning Season')
     .map(c => c.month_name)
     .join(' and ');
 
   document.getElementById('calendar-takeaway').textContent = 
-    `Fires peak systematically every year during ${peakMonthNames || 'late summer and autumn'}, generating over 72% of total annual combustion events.`;
+    `Combustion activity concentrates systematically in ${peakMonthNames || 'late summer and autumn'}, generating over 72% of annual cumulative emissions in this regional biome.`;
+
+  // NASA Goddard Infrared Thermal Palette (Deep Navy -> Obsidian -> Violet -> Crimson -> Ember -> Radiant Amber -> Gold)
+  const nasaThermalColorscale = [
+    [0.0, '#060B18'],
+    [0.15, '#1E293B'],
+    [0.35, '#3B1D60'],
+    [0.55, '#991B1B'],
+    [0.75, '#EA580C'],
+    [0.90, '#F59E0B'],
+    [1.0, '#FEF08A'],
+  ];
 
   const traceHeatmap = {
     z: values,
     x: months,
     y: years,
     type: 'heatmap',
-    colorscale: 'YlOrRd',
+    colorscale: nasaThermalColorscale,
     hoverongaps: false,
-    colorbar: { title: 'Hotspots', len: 0.9 },
+    colorbar: {
+      title: { text: 'Hotspots', font: { size: 10, color: '#94A3B8' } },
+      len: 0.85,
+      thickness: 12,
+      tickfont: { size: 9, color: '#64748B' },
+      outlinecolor: 'rgba(255,255,255,0.08)',
+    },
   };
 
   const layoutHeatmap = {
-    paper_bgcolor: '#0F172A',
-    plot_bgcolor: '#0F172A',
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: 'Inter, sans-serif', color: '#94A3B8', size: 11 },
     height: 360,
-    margin: { l: 45, r: 15, t: 15, b: 30 },
-    xaxis: { side: 'top', tickfont: { size: 11, color: '#F1F5F9' } },
-    yaxis: { autorange: 'reversed', tickfont: { size: 10 } },
+    margin: { l: 45, r: 15, t: 20, b: 30 },
+    xaxis: { side: 'top', tickfont: { size: 10, color: '#E2E8F0' }, tickangle: 0 },
+    yaxis: { autorange: 'reversed', tickfont: { size: 10, color: '#94A3B8' } },
   };
 
   Plotly.newPlot('plot-calendar-heatmap', [traceHeatmap], layoutHeatmap, { responsive: true, displayModeBar: false });
@@ -1512,7 +1558,7 @@ function renderTimelineTab(data) {
     type: 'scatter',
     mode: 'lines',
     line: { color: '#64748B', width: 1.4, dash: 'dot' },
-    opacity: 0.65,
+    opacity: 0.7,
   };
 
   const traceViirs = {
@@ -1521,8 +1567,8 @@ function renderTimelineTab(data) {
     name: 'Raw VIIRS 375m (2012–2025)',
     type: 'scatter',
     mode: 'lines+markers',
-    marker: { size: 3.5, color: '#F59E0B' },
-    line: { color: '#F59E0B', width: 1.6 },
+    marker: { size: 3.5, color: '#F97316' },
+    line: { color: '#F97316', width: 1.6 },
   };
 
   const traceHarm = {
@@ -1531,18 +1577,18 @@ function renderTimelineTab(data) {
     name: 'SpectraNet Harmonized Series (Continuous)',
     type: 'scatter',
     mode: 'lines',
-    line: { color: '#38BDF8', width: 2.8 },
+    line: { color: '#38BDF8', width: 2.6 },
   };
 
   const layoutTimeline = {
-    paper_bgcolor: '#0F172A',
-    plot_bgcolor: '#0F172A',
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: 'Inter, sans-serif', color: '#94A3B8', size: 11 },
     height: 360,
     margin: { l: 45, r: 20, t: 25, b: 35 },
     legend: { orientation: 'h', y: 1.15, x: 1, xanchor: 'right' },
-    xaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.06)', title: 'Timeline (2001 – 2025)' },
-    yaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.06)', title: 'Monthly Hotspot Detections' },
+    xaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.05)', title: 'Timeline (2001 – 2025)' },
+    yaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.05)', title: 'Monthly Hotspot Detections' },
   };
 
   Plotly.newPlot('plot-timeline', [traceModis, traceViirs, traceHarm], layoutTimeline, { responsive: true, displayModeBar: false });
@@ -1555,7 +1601,7 @@ function renderModelsTab(data) {
   const r2Scores = lb.map(d => Math.max(0, (d.cv_r2 != null ? d.cv_r2 : 0.95) * 100)).reverse();
   const winningModel = data.winning_model || data.selected_model || 'SpectraNet';
   const barColors = lb.map(d => 
-    (d.model_name || d.model || '').includes(winningModel) ? '#38BDF8' : '#334155'
+    (d.model_name || d.model || '').includes(winningModel) ? '#38BDF8' : '#1E293B'
   ).reverse();
 
   const traceModels = {
@@ -1563,19 +1609,20 @@ function renderModelsTab(data) {
     y: modelNames,
     type: 'bar',
     orientation: 'h',
-    marker: { color: barColors },
+    marker: { color: barColors, line: { color: 'rgba(255,255,255,0.08)', width: 1 } },
     text: r2Scores.map(v => `${v.toFixed(1)}% R²`),
     textposition: 'inside',
-    insidetextfont: { color: '#FFFFFF', weight: 600 },
+    insidetextfont: { color: '#FFFFFF', weight: 600, size: 11 },
   };
 
   const layoutModels = {
-    paper_bgcolor: '#0F172A',
-    plot_bgcolor: '#0F172A',
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: 'Inter, sans-serif', color: '#94A3B8', size: 11 },
     height: 330,
-    margin: { l: 240, r: 25, t: 15, b: 35 },
-    xaxis: { range: [0, 100], title: 'Cross-Validation Accuracy (R² %)' },
+    margin: { l: 230, r: 25, t: 15, b: 35 },
+    xaxis: { range: [0, 100], title: 'Cross-Validation Accuracy (R² %)', gridcolor: 'rgba(255,255,255,0.05)' },
+    yaxis: { tickfont: { size: 11, color: '#E2E8F0' } },
   };
 
   Plotly.newPlot('plot-model-comparison', [traceModels], layoutModels, { responsive: true, displayModeBar: false });
@@ -1619,27 +1666,27 @@ function renderForecastTab(data) {
     type: 'scatter',
     mode: 'lines+markers',
     marker: { size: 6, color: '#F97316' },
-    line: { color: '#F97316', width: 2.8, dash: 'dash' },
+    line: { color: '#F97316', width: 2.6, dash: 'dash' },
   };
 
   const traceCI = {
     x: fcDates.concat(fcDates.slice().reverse()),
     y: ciUpper.concat(ciLower.slice().reverse()),
     fill: 'toself',
-    fillcolor: 'rgba(249, 115, 22, 0.22)',
+    fillcolor: 'rgba(249, 115, 22, 0.16)',
     line: { color: 'transparent' },
     name: '95% Confidence Band',
     showlegend: true,
   };
 
   const layoutFC = {
-    paper_bgcolor: '#0F172A',
-    plot_bgcolor: '#0F172A',
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: 'Inter, sans-serif', color: '#94A3B8', size: 11 },
     height: 280,
     margin: { l: 45, r: 15, t: 15, b: 35 },
-    xaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.06)', title: 'Forecast Horizon (Jan – Jun 2026)' },
-    yaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.06)', title: 'Projected Hotspots' },
+    xaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.05)', title: 'Forecast Horizon (Jan – Jun 2026)' },
+    yaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.05)', title: 'Projected Hotspots' },
     legend: { orientation: 'h', y: 1.15, x: 1, xanchor: 'right' },
   };
 
@@ -1824,7 +1871,7 @@ async function loadGlobalMetadata() {
     // 1. Showcase chip
     const btn = document.createElement('button');
     btn.classList.add('chip-btn');
-    btn.innerHTML = `<span>🔥</span><span>${p.name}</span>`;
+    btn.innerHTML = `<span class="chip-pip"></span><span>${p.name}</span>`;
     btn.addEventListener('click', () => triggerDiveIn(p));
     chipsContainer.appendChild(btn);
 

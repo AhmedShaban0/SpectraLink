@@ -186,20 +186,25 @@
     <!-- Top Mission Control Navigation Bar -->
     <header class="regional-header">
       <div class="nav-left">
-        <button id="btn-back-to-orbit" class="btn-back-orbit" title="Return to 3D Earth Globe">
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+        <button id="btn-back-to-orbit" class="btn-back-orbit" title="Return to 3D Global Orbit">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none">
+            <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
-          <span>Back to 3D Earth</span>
+          <span>3D Global Orbit</span>
         </button>
 
-        <img src="static/logo_transparent.png" alt="SpectraLink" class="nav-logo-img">
-        <div class="brand-divider"></div>
-        <img src="static/nasa_space_apps_white.png" alt="NASA Space Apps" class="nav-space-apps-img">
+        <div class="nav-brand-group">
+          <img src="static/logo_transparent.png" alt="SpectraLink" class="nav-logo-img">
+          <div class="brand-divider"></div>
+          <img src="static/nasa_space_apps_white.png" alt="NASA Space Apps" class="nav-space-apps-img">
+        </div>
 
         <div class="region-selector-wrap">
-          <select id="region-dropdown" class="region-select">
+          <svg class="region-selector-pin" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <select id="region-dropdown" class="region-select" aria-label="Select Target Region">
             <!-- Populated via JS -->
           </select>
         </div>
@@ -207,57 +212,81 @@
 
       <div class="nav-right">
         <div class="ai-model-badge">
-          <span class="badge-label">AI Engine:</span>
+          <span class="badge-label">ENGINE:</span>
           <span id="active-model-name" class="badge-value">SpectraNet Stacking</span>
         </div>
 
-        <button id="btn-export-csv" class="btn-download" title="Download 48-Column Continuous Harmonized Dataset">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none">
+        <button id="btn-export-csv" class="btn-download" title="Export Continuous Harmonized Dataset (CSV)">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          <span>Download CSV</span>
+          <span>Export Dataset (CSV)</span>
         </button>
       </div>
     </header>
 
-    <!-- 4 Clean Executive KPI Cards -->
-    <section class="kpi-banner">
-      <div class="kpi-card">
-        <span class="kpi-icon">🔥</span>
-        <div class="kpi-content">
-          <span class="kpi-title">Total Active Fires</span>
-          <div id="kpi-total-hotspots" class="kpi-val">--</div>
-          <span class="kpi-sub">Harmonized 2001–2025</span>
+    <!-- Unified Mission Telemetry Ribbon (NASA GSFC Earth Operations Console) -->
+    <section class="telemetry-ribbon" aria-label="Regional Telemetry Summary">
+      <div class="telemetry-cell">
+        <div class="telemetry-cell-header">
+          <svg class="telemetry-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M3.6 9h16.8M3.6 15h16.8M12 3a15.3 15.3 0 0 1 4 9 15.3 15.3 0 0 1-4 9 15.3 15.3 0 0 1-4-9 15.3 15.3 0 0 1 4-9z"></path>
+          </svg>
+          <span class="telemetry-label">Cumulative Detections</span>
         </div>
+        <div class="telemetry-metric-row">
+          <span id="kpi-total-hotspots" class="telemetry-metric">--</span>
+          <span class="telemetry-unit">events</span>
+        </div>
+        <span class="telemetry-caption">Harmonized Time Series 2001–2025</span>
       </div>
 
-      <div class="kpi-card">
-        <span class="kpi-icon">📅</span>
-        <div class="kpi-content">
-          <span class="kpi-title">Peak Burning Months</span>
-          <div id="kpi-peak-months" class="kpi-val text-amber">--</div>
-          <span class="kpi-sub">Highest Fire Density</span>
+      <div class="telemetry-cell">
+        <div class="telemetry-cell-header">
+          <svg class="telemetry-icon text-amber" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+            <circle cx="12" cy="12" r="4"></circle>
+          </svg>
+          <span class="telemetry-label">Peak Climatology</span>
         </div>
+        <div class="telemetry-metric-row">
+          <span id="kpi-peak-months" class="telemetry-metric text-amber">--</span>
+        </div>
+        <span class="telemetry-caption">Maximum Annual Radiative Density</span>
       </div>
 
-      <div class="kpi-card">
-        <span class="kpi-icon">🎯</span>
-        <div class="kpi-content">
-          <span class="kpi-title">AI Calibration Accuracy</span>
-          <div id="kpi-accuracy-badge" class="kpi-val text-cyan">98.5% Match</div>
-          <span id="kpi-cv-r2" class="kpi-sub">Time-Series R² = 0.76</span>
+      <div class="telemetry-cell">
+        <div class="telemetry-cell-header">
+          <svg class="telemetry-icon text-cyan" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="22" y1="12" x2="18" y2="12"></line>
+            <line x1="6" y1="12" x2="2" y2="12"></line>
+            <line x1="12" y1="6" x2="12" y2="2"></line>
+            <line x1="12" y1="22" x2="12" y2="18"></line>
+          </svg>
+          <span class="telemetry-label">Calibration Alignment</span>
         </div>
+        <div class="telemetry-metric-row">
+          <span id="kpi-accuracy-badge" class="telemetry-metric text-cyan">98.5% Match</span>
+        </div>
+        <span id="kpi-cv-r2" class="telemetry-caption">Cross-Val R² = 0.760</span>
       </div>
 
-      <div class="kpi-card alert-card">
-        <span class="kpi-icon">🚨</span>
-        <div class="kpi-content">
-          <span class="kpi-title">Current Fire Risk</span>
-          <div id="kpi-risk-badge" class="kpi-val text-green">Quiet Season</div>
-          <span id="kpi-risk-detail" class="kpi-sub">Next Month: Low Activity</span>
+      <div class="telemetry-cell telemetry-cell-status">
+        <div class="telemetry-cell-header">
+          <span id="kpi-status-ping" class="status-indicator-ping green">
+            <span class="ping-wave"></span>
+            <span class="ping-dot"></span>
+          </span>
+          <span class="telemetry-label">Operational Risk State</span>
         </div>
+        <div class="telemetry-metric-row">
+          <span id="kpi-risk-badge" class="telemetry-metric text-green">Quiet Season</span>
+        </div>
+        <span id="kpi-risk-detail" class="telemetry-caption">Baseline Low Combustion Conditions</span>
       </div>
     </section>
 
@@ -266,23 +295,26 @@
       
       <!-- LEFT SECTION: Large Interactive Satellite Map -->
       <section class="workspace-map-pane">
-        <!-- Map Overlay Header with Filter Pills -->
+        <!-- Map Overlay Header with Segmented Filter Pills -->
         <div class="map-overlay-bar">
           <div class="map-region-info">
             <span id="map-target-title" class="map-title">Nile Delta, Egypt</span>
             <span id="map-biome-tag" class="map-biome">Irrigated Agricultural Ecosystem</span>
           </div>
 
-          <!-- Clean 3-Button Filter Pill -->
-          <div class="fire-filter-pills">
+          <!-- Clean Precision Sensor Segment Control -->
+          <div class="sensor-segment-control" role="group" aria-label="Sensor Filter Feeds">
             <button class="filter-pill active" data-filter="all">
-              <span>🔥</span> All Harmonized Fires
+              <span class="pip pip-all"></span>
+              <span>Harmonized All</span>
             </button>
             <button class="filter-pill" data-filter="viirs">
-              <span>🛰️</span> VIIRS (375m)
+              <span class="pip pip-viirs"></span>
+              <span>VIIRS 375m</span>
             </button>
             <button class="filter-pill" data-filter="modis">
-              <span>🛰️</span> MODIS (1km)
+              <span class="pip pip-modis"></span>
+              <span>MODIS 1km</span>
             </button>
           </div>
         </div>
@@ -291,8 +323,20 @@
         <div id="leaflet-map" class="map-canvas"></div>
 
         <div class="map-footer-coords">
-          <span id="mouse-coords">Coordinates: --.---, --.---</span>
-          <span class="map-legend-hint">🔥 Major Fire Center &nbsp;·&nbsp; 🔴 Active Satellite Detection</span>
+          <div class="coords-display">
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none">
+              <circle cx="12" cy="12" r="9"></circle>
+              <line x1="12" y1="3" x2="12" y2="7"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+              <line x1="3" y1="12" x2="7" y2="12"></line>
+              <line x1="17" y1="12" x2="21" y2="12"></line>
+            </svg>
+            <span id="mouse-coords">Coordinates: --.---, --.---</span>
+          </div>
+          <div class="map-legend-items">
+            <span class="legend-item"><span class="legend-pip pulse"></span> Major Combustion Center</span>
+            <span class="legend-item"><span class="legend-pip dot"></span> Satellite Hotspot</span>
+          </div>
         </div>
       </section>
 
@@ -300,29 +344,29 @@
       <section class="workspace-analytics-pane">
         
         <!-- Tab Navigation Buttons -->
-        <nav class="analytics-tabs-nav">
+        <nav class="analytics-tabs-nav" aria-label="Analytical Views">
           <button class="tab-btn active" data-tab="tab-calendar">
-            📅 Yearly Fire Calendar
+            <span>Seasonal Climatology</span>
           </button>
           <button class="tab-btn" data-tab="tab-timeline">
-            📈 Before vs. After
+            <span>Sensor Harmonization</span>
           </button>
           <button class="tab-btn" data-tab="tab-models">
-            🤖 AI Models Accuracy
+            <span>Algorithm Benchmark</span>
           </button>
           <button class="tab-btn" data-tab="tab-forecast">
-            🔮 2026 Forecast & Smoke
+            <span>Forecast & Emissions</span>
           </button>
         </nav>
 
         <!-- Tab 1: Yearly Fire Calendar -->
         <div id="tab-calendar" class="tab-panel active">
           <div class="chart-box">
-            <div class="takeaway-banner">
-              <span class="takeaway-icon">💡</span>
-              <span id="calendar-takeaway" class="takeaway-text">
+            <div class="observation-brief">
+              <span class="brief-tag">ANALYTICAL OBSERVATION</span>
+              <p id="calendar-takeaway" class="brief-text">
                 Agricultural stubble burning peaks sharply every autumn in September and October, accounting for over 70% of annual fires.
-              </span>
+              </p>
             </div>
             <div id="plot-calendar-heatmap" class="plotly-chart"></div>
           </div>
@@ -331,11 +375,11 @@
         <!-- Tab 2: Before vs. After Harmonization -->
         <div id="tab-timeline" class="tab-panel">
           <div class="chart-box">
-            <div class="takeaway-banner">
-              <span class="takeaway-icon">🛰️</span>
-              <span class="takeaway-text">
-                SpectraNet eliminates the artificial Jan 2012 sensor gap, seamlessly harmonizing 1km MODIS into continuous 375m VIIRS resolution.
-              </span>
+            <div class="observation-brief">
+              <span class="brief-tag">SENSOR HARMONIZATION FINDING</span>
+              <p class="brief-text">
+                SpectraNet eliminates the sensor discontinuity of January 2012, unifying 1km MODIS and 375m VIIRS into an uninterrupted, calibrated 24-year climate record.
+              </p>
             </div>
             <div id="plot-timeline" class="plotly-chart"></div>
           </div>
@@ -345,7 +389,7 @@
         <div id="tab-models" class="tab-panel">
           <div class="chart-box">
             <div class="model-selection-bar">
-              <label for="model-selector">Select Active Architecture:</label>
+              <span class="model-select-label">ACTIVE ARCHITECTURE:</span>
               <select id="model-selector" class="clean-select">
                 <option value="6. SpectraNet Hybrid Stacking" selected>6. SpectraNet Hybrid Stacking (Ensemble)</option>
                 <option value="5. Huber-Loss GBDT & ExtraTrees Blend">5. Huber-Loss GBDT & ExtraTrees Blend</option>
@@ -363,15 +407,15 @@
         <div id="tab-forecast" class="tab-panel">
           <div class="chart-box">
             <div class="forecast-impact-strip">
-              <div class="impact-pill">
-                <span class="impact-title">ESTIMATED CO₂ RELEASED</span>
+              <div class="impact-cell">
+                <span class="impact-title">Atmospheric Carbon Release (CO₂)</span>
                 <span id="forecast-co2-val" class="impact-num">-- kt</span>
-                <span class="impact-desc">Seiler & Crutzen Carbon Equation</span>
+                <span class="impact-desc">Seiler & Crutzen Biomass Combustion Model</span>
               </div>
-              <div class="impact-pill">
-                <span class="impact-title">SMOKE (PM₂.₅) HEALTH AEROSOL</span>
+              <div class="impact-cell">
+                <span class="impact-title">Aerosol Particulate Load (PM₂.₅)</span>
                 <span id="forecast-pm25-val" class="impact-num">-- Tons</span>
-                <span class="impact-desc">Air Quality Respiratory Impact</span>
+                <span class="impact-desc">Regional Air Quality & Health Dispersion</span>
               </div>
             </div>
             <div id="plot-forecast" class="plotly-chart-fc"></div>
